@@ -8,7 +8,7 @@ Solves logically using documented strategies .
 Current State
 -------------
 
-It works!  It only does simple elimination at the moment, but it's a working sudoku solver written in Rust! Should be able to solve any 
+It works!  It only does simple elimination at the moment, but it's a working sudoku solver written in Rust! It should be able to solve any Sudoku marked as 'Easy'.
 
 Why?
 ----
