@@ -70,7 +70,6 @@ impl SuCell {
   
   pub fn elimVals(&mut self, ns: Vec<u8>) {
     for n in ns.iter() {
-      println!("elim {} from {}", n, self.locS());
       self.pmarks[c(*n)] = false;
     }
     self.checkSolve();
