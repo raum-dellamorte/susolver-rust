@@ -100,6 +100,16 @@ impl SuPuzzle {
     }
     out
   }
+  fn pmarks2or3(&self) -> Vec<u8> {
+    let mut out: Vec<u8> = Vec::new();
+    for cel in self.cells.iter() {
+      let ln = cel.pmarksVec().len();
+      if (ln > 1) && (ln < 4) {
+        out.push(cel.pos);
+      }
+    }
+    out
+  }
   fn canSee(&self, cel: &SuCell) -> Vec<u8> {
     let mut out: Vec<u8> = Vec::new();
     for tcel in self.cells.iter() {
@@ -127,7 +137,7 @@ impl SuPuzzle {
     }
     out
   }
-  fn solved(&self) -> Vec<u8> {
+  fn solvedCells(&self) -> Vec<u8> {
     let mut out: Vec<u8> = Vec::new();
     for cel in self.cells.iter() {
       if cel.solved() {
@@ -136,7 +146,7 @@ impl SuPuzzle {
     }
     out
   }
-  fn unsolved(&self) -> Vec<u8> {
+  fn unsolvedCells(&self) -> Vec<u8> {
     let mut out: Vec<u8> = Vec::new();
     for cel in self.cells.iter() {
       if !cel.solved() {
@@ -156,7 +166,7 @@ impl SuPuzzle {
   pub fn simpleElim(&mut self) -> bool {
     let mut out = false;
     'outer: loop {
-      let test = self.unsolved();
+      let test = self.unsolvedCells();
       for cp in test.iter() {
         let tmp = self.canSeeSolved(&self.cells[c(*cp)]);
         for tpos in tmp.iter() {
@@ -176,7 +186,7 @@ impl SuPuzzle {
   pub fn hiddenSingle(&mut self) -> bool {
     let mut out = false;
     'outer: loop {
-      let test = self.unsolved();
+      let test = self.unsolvedCells();
       for cp in test.iter() {
         let pmarx = self.cells[c(*cp)].pmarksCopy();
         for cand in 0..9 {

@@ -52,6 +52,14 @@ impl SuCell {
     pmc
   }
   
+  pub fn pmarksVec(&self) -> Vec<u8> {
+    let mut out: Vec<u8> = Vec::new();
+    for i in 0..9 {
+      if self.pmarks[i] { out.push((i + 1) as u8); }
+    }
+    out
+  }
+  
   fn checkSolve(&mut self) {
     if self.solved() {
       for i in 0..9 {
