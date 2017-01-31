@@ -6,6 +6,6 @@ use susolver::supuzzle::SuPuzzle;
 
 fn main() {
   let mut puz = SuPuzzle::new(&String::from("Hard01"));
-  puz.simpleElim();
+  puz.solve();
   println!("Puzzle : \n{}", puz.puzStringWithPMarks());
 }

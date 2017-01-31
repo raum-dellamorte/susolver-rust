@@ -68,9 +68,13 @@ impl SuPuzzle {
           let cel = self.cells[(rc * 9) + cc];
           if cel.val > 0 {
             if pm != 1 {
-              out += &(String::from("* | *"));
+              if cel.clue {
+                out += &(String::from("* - *"));
+              } else {
+                out += &(String::from("+ - +"));
+              }
             } else {
-              out += &(format!("- {} -", cel.val));
+              out += &(format!("| {} |", cel.val));
             }
           } else {
             out += &(format!("{} {} {}", 
@@ -141,12 +145,19 @@ impl SuPuzzle {
     }
     out
   }
+  pub fn solve(&mut self) {
+    loop {
+      self.simpleElim();
+      if self.hiddenSingle() { continue; }
+      
+      break
+    }
+  }
   pub fn simpleElim(&mut self) -> bool {
     let mut out = false;
     'outer: loop {
       let test = self.unsolved();
       for cp in test.iter() {
-        if (self.cells[c(*cp)]).solved() {continue}
         let tmp = self.canSeeSolved(&self.cells[c(*cp)]);
         for tpos in tmp.iter() {
           let tval = ((*self).cells[c(*tpos)]).val;
@@ -155,6 +166,44 @@ impl SuPuzzle {
             (*cel).elimVal(tval);
             out = true;
             if cel.val > 0_u8 { continue 'outer; }
+          }
+        }
+      }
+      break 'outer;
+    }
+    out
+  }
+  pub fn hiddenSingle(&mut self) -> bool {
+    let mut out = false;
+    'outer: loop {
+      let test = self.unsolved();
+      for cp in test.iter() {
+        let pmarx = self.cells[c(*cp)].pmarksCopy();
+        for cand in 0..9 {
+          if !pmarx[cand] {continue;}
+          let tmp = self.canSeeUnsolved(&self.cells[c(*cp)]);
+          let (mut cntc, mut cntr, mut cntb) = (0, 0, 0);
+          for tpos in tmp.iter() {
+            let tpmarx = self.cells[c(*tpos)].pmarksCopy();
+            if tpmarx[cand] {
+              let cel = &(self.cells[c(*cp)]);
+              let tcel = &(self.cells[c(*tpos)]);
+              if cel.col() == tcel.col() { cntc += 1 }
+              if cel.row() == tcel.row() { cntr += 1 }
+              if cel.block() == tcel.block() { cntb += 1 }
+            }
+          }
+          if ((cntc == 0) || (cntr == 0)) || (cntb == 0) {
+            let mut elims: Vec<u8> = Vec::new();
+            for i in 0..9 {
+              if i == cand { continue; }
+              elims.push((i + 1) as u8);
+            }
+            let cel = &mut ((*self).cells[c(*cp)]);
+            println!("hiddenSingle {} found for {}", cand + 1, cel.locS());
+            cel.elimVals(elims);
+            out = true;
+            break 'outer;
           }
         }
       }

@@ -8,7 +8,11 @@ Solves logically using documented strategies .
 Current State
 -------------
 
-It works!  It only does simple elimination at the moment, but it's a working sudoku solver written in Rust! It should be able to solve any Sudoku marked as 'Easy'.
+It works!  ~~It only does simple elimination at the moment, but it's a working sudoku solver written in Rust! It should be able to solve any Sudoku marked as 'Easy'.~~
+
+It now does simple elimination and Hidden Singles.  This was enough to solve the "Hard" puzzle I through at it.  Remaining strategies will be an ever growing pain.
+
+**Road Map:** Check out [The Sudoku Wiki](http://www.sudokuwiki.org/sudoku.htm) for all the horrific strategies I have to teach a machine to do.  I write all my sudoku solving functions based on the descriptions of strategies listed there.  Also, I need to be able to select available puzzle files instead of hard coding which puzzle to load, a way of entering a puzzle from within the program and saving it, and a GUI to make both of those things easier for the user.  Also, I *could* make it a library for use in Python and Ruby or whatever.
 
 Why?
 ----
@@ -85,4 +89,47 @@ This was the input read from a txt file:
 0 0 0  0 1 8  0 0 6 
 0 0 8  6 0 4  0 2 1 
 4 0 0  0 0 9  0 0 0
+```
+
+**Update**
+After adding support for Hidden Singles, it now solves the above puzzle.  Next up, "Evil" difficulty.
+```
+Puzzle :
++ - +   + - +   + - +     * - *   + - +   + - +     + - +   + - +   * - *
+| 6 |   | 8 |   | 9 |     | 5 |   | 3 |   | 1 |     | 4 |   | 7 |   | 2 |
++ - +   + - +   + - +     * - *   + - +   + - +     + - +   + - +   * - *
+
+* - *   * - *   + - +     * - *   + - +   * - *     * - *   + - +   + - +
+| 1 |   | 7 |   | 2 |     | 4 |   | 8 |   | 6 |     | 5 |   | 3 |   | 9 |
+* - *   * - *   + - +     * - *   + - +   * - *     * - *   + - +   + - +
+
+* - *   + - +   + - +     * - *   * - *   + - +     + - +   + - +   + - +
+| 5 |   | 4 |   | 3 |     | 7 |   | 9 |   | 2 |     | 6 |   | 1 |   | 8 |
+* - *   + - +   + - +     * - *   * - *   + - +     + - +   + - +   + - +
+
+
++ - +   * - *   + - +     + - +   + - +   + - +     * - *   + - +   + - +
+| 9 |   | 3 |   | 7 |     | 1 |   | 6 |   | 5 |     | 2 |   | 8 |   | 4 |
++ - +   * - *   + - +     + - +   + - +   + - +     * - *   + - +   + - +
+
++ - +   + - +   * - *     + - +   * - *   + - +     * - *   + - +   + - +
+| 8 |   | 5 |   | 4 |     | 9 |   | 2 |   | 3 |     | 1 |   | 6 |   | 7 |
++ - +   + - +   * - *     + - +   * - *   + - +     * - *   + - +   + - +
+
++ - +   + - +   * - *     + - +   + - +   + - +     + - +   * - *   + - +
+| 2 |   | 1 |   | 6 |     | 8 |   | 4 |   | 7 |     | 3 |   | 9 |   | 5 |
++ - +   + - +   * - *     + - +   + - +   + - +     + - +   * - *   + - +
+
+
++ - +   + - +   + - +     + - +   * - *   * - *     + - +   + - +   * - *
+| 7 |   | 2 |   | 5 |     | 3 |   | 1 |   | 8 |     | 9 |   | 4 |   | 6 |
++ - +   + - +   + - +     + - +   * - *   * - *     + - +   + - +   * - *
+
++ - +   + - +   * - *     * - *   + - +   * - *     + - +   * - *   * - *
+| 3 |   | 9 |   | 8 |     | 6 |   | 5 |   | 4 |     | 7 |   | 2 |   | 1 |
++ - +   + - +   * - *     * - *   + - +   * - *     + - +   * - *   * - *
+
+* - *   + - +   + - +     + - +   + - +   * - *     + - +   + - +   + - +
+| 4 |   | 6 |   | 1 |     | 2 |   | 7 |   | 9 |     | 8 |   | 5 |   | 3 |
+* - *   + - +   + - +     + - +   + - +   * - *     + - +   + - +   + - +
 ```

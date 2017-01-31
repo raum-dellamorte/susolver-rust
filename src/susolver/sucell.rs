@@ -44,8 +44,15 @@ impl SuCell {
     format!("{}{}", self.colS(), self.rowS())
   }
   
-  pub fn elimVal(&mut self, n: u8) {
-    self.pmarks[c(n)] = false;
+  pub fn pmarksCopy(&self) -> [bool; 9] {
+    let mut pmc = [false; 9];
+    for i in 0..9 {
+      pmc[i] = self.pmarks[i];
+    }
+    pmc
+  }
+  
+  fn checkSolve(&mut self) {
     if self.solved() {
       for i in 0..9 {
         if !self.pmarks[i] {continue}
@@ -54,6 +61,19 @@ impl SuCell {
         break;
       }
     }
+  }
+  
+  pub fn elimVal(&mut self, n: u8) {
+    self.pmarks[c(n)] = false;
+    self.checkSolve();
+  }
+  
+  pub fn elimVals(&mut self, ns: Vec<u8>) {
+    for n in ns.iter() {
+      println!("elim {} from {}", n, self.locS());
+      self.pmarks[c(*n)] = false;
+    }
+    self.checkSolve();
   }
   
   pub fn solved(&self) -> bool {
