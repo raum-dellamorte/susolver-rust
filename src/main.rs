@@ -5,7 +5,7 @@ pub mod susolver;
 use susolver::supuzzle::SuPuzzle;
 
 fn main() {
-  let mut puz = SuPuzzle::new(&String::from("Hard01"));
+  let mut puz = SuPuzzle::new(&String::from("Evil01"));
   puz.solve();
   println!("Puzzle : \n{}", puz.puzStringWithPMarks());
 }
