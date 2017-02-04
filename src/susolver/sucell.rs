@@ -1,6 +1,8 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
+use std::collections::HashSet;
+
 use susolver::util::{c, mod9, grp3, grp9};
 
 #[derive(Debug, Copy, Clone)]
@@ -52,10 +54,10 @@ impl SuCell {
     pmc
   }
   
-  pub fn pmarksVec(&self) -> Vec<u8> {
-    let mut out: Vec<u8> = Vec::new();
+  pub fn pmarksSet(&self) -> HashSet<u8> {
+    let mut out: HashSet<u8> = HashSet::new();
     for i in 0..9 {
-      if self.pmarks[i] { out.push((i + 1) as u8); }
+      if self.pmarks[i] { out.insert((i + 1) as u8); }
     }
     out
   }
@@ -76,8 +78,8 @@ impl SuCell {
     self.checkSolve();
   }
   
-  pub fn elimVals(&mut self, ns: Vec<u8>) {
-    for n in ns.iter() {
+  pub fn elimVals(&mut self, ns: &Vec<u8>) {
+    for n in (*ns).iter() {
       self.pmarks[c(*n)] = false;
     }
     self.checkSolve();
@@ -89,6 +91,14 @@ impl SuCell {
   }
   pub fn canBe(&self, n: u8) -> bool {
     self.pmarks[c(n)]
+  }
+  pub fn canBeAny(&self, ns: &Vec<u8>) -> bool {
+    let mut out = false;
+    for n in (*ns).iter() {
+      out = out && self.pmarks[c(*n)];
+      if out { break; }
+    }
+    out
   }
   pub fn canSee(&self, cel: &SuCell) -> bool {
     let mut out: bool = false;
