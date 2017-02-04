@@ -95,8 +95,7 @@ impl SuCell {
   pub fn canBeAny(&self, ns: &Vec<u8>) -> bool {
     let mut out = false;
     for n in (*ns).iter() {
-      out = out && self.pmarks[c(*n)];
-      if out { break; }
+      out = out || self.pmarks[c(*n)];
     }
     out
   }

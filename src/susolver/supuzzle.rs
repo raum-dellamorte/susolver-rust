@@ -120,10 +120,10 @@ impl SuPuzzle {
     }
     out
   }
-  fn connectedAllUnsolved(&self, cels: Vec<u8>) -> Vec<u8> {
+  fn connectedAllUnsolved(&self, cels: &Vec<u8>) -> Vec<u8> {
     let mut out: Vec<u8> = Vec::new();
     for tcel in self.cells.iter() {
-      if !tcel.solved() && self.canSeeAll(tcel.pos, &cels) {
+      if !tcel.solved() && self.canSeeAll(tcel.pos, cels) {
         out.push(tcel.pos);
       }
     }
@@ -265,7 +265,8 @@ impl SuPuzzle {
           let pmu: HashSet<u8> = pm1.union(&pm2).cloned().collect();
           if pmu.len() == 2 {
             // Found Naked Pair!
-            let mut toFix = self.connectedAllUnsolved(vec!(tc1, tc2));
+            //println!("Naked Pair Candidate: {} {}", self.cell(tc1).locS(), self.cell(tc2).locS());
+            let mut toFix = self.connectedAllUnsolved(&vec!(tc1, tc2));
             let fvals: Vec<u8> = pmu.clone().into_iter().collect();
             toFix.retain(|x| self.cell(*x).canBeAny(&fvals) ); // If there's nothing to fix, don't fix it.
             if toFix.len() > 0 {
@@ -286,14 +287,15 @@ impl SuPuzzle {
             let tc3: u8 = test[tc3p];
             //print!("tc3: {} is {} | ", tc3p, tc3);
             if !self.canSeeAll(tc3, &(vec!(tc1, tc2))) { continue; }
-            let pm3: HashSet<u8> = (self.cell(tc3)).pmarksSet();
+            let pm3: HashSet<u8> = self.cell(tc3).pmarksSet();
             let pmi3: HashSet<u8> = pmu.intersection(&pm3).cloned().collect();
             if pmi3.len() < 2 { continue; }
             let pmu3: HashSet<u8> = pmu.union(&pm3).cloned().collect();
             if pmu3.len() == 3 {
               // Found Naked Triplet!
-              let mut toFix = self.connectedAllUnsolved(vec!(tc1, tc2, tc3));
-              let fvals: Vec<u8> = pmu.clone().into_iter().collect();
+              //println!("Naked Triplet Candidate: {} {} {}", self.cell(tc1).locS(), self.cell(tc2).locS(), self.cell(tc3).locS());
+              let mut toFix: Vec<u8> = self.connectedAllUnsolved(&vec!(tc1, tc2, tc3));
+              let fvals: Vec<u8> = pmu3.clone().into_iter().collect();
               toFix.retain(|x| self.cell(*x).canBeAny(&fvals) ); // If there's nothing to fix, don't fix it.
               if toFix.len() > 0 {
                 for fcp in toFix.iter() {
