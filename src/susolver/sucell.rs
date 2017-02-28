@@ -19,7 +19,7 @@ impl SuCell {
   }
   
   pub fn colS(&self) -> char {
-    (64_u8 + self.col()) as char
+    (48_u8 + self.col()) as char
   }
   
   pub fn row(&self) -> u8 {
@@ -27,7 +27,7 @@ impl SuCell {
   }
   
   pub fn rowS(&self) -> char {
-    (48_u8 + self.row()) as char
+    (64_u8 + self.row()) as char
   }
   
   pub fn bcol(&self) -> u8 {
@@ -39,11 +39,11 @@ impl SuCell {
   }
   
   pub fn block(&self) -> u8 {
-    ((self.brow() - 1) * 3) + (self.bcol() - 1)
+    ((self.brow() - 1) * 3) + self.bcol()
   }
   
   pub fn locS(&self) -> String {
-    format!("{}{}", self.colS(), self.rowS())
+    format!("{}{}", self.rowS(), self.colS())
   }
   
   pub fn pmarksCopy(&self) -> [bool; 9] {
