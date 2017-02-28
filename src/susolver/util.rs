@@ -1,6 +1,8 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
+use std::collections::HashSet;
+
 pub fn c(n: u8) -> usize {
   if n < 1_u8 {
     0
@@ -32,4 +34,20 @@ pub fn grp3(n: u8) -> u8 {
 
 pub fn grp9(n: u8) -> u8 {
   grp(n, 9_u8)
+}
+
+pub fn plistRemainder(se: &HashSet<u8>) -> Vec<u8> {
+  let mut out: Vec<u8> = Vec::new();
+  for n in (1_u8)..(10_u8) {
+    if !((*se).contains(&n)) { out.push(n); }
+  }
+  out
+}
+
+pub fn plistSetToVec(se: &HashSet<u8>) -> Vec<u8> {
+  let mut out: Vec<u8> = Vec::new();
+  for n in (1_u8)..(10_u8) {
+    if (*se).contains(&n) { out.push(n); }
+  }
+  out
 }
