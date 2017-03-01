@@ -97,44 +97,90 @@ This was the input read from a txt file:
 ```
 
 **Update**
-After adding support for Hidden Singles, it now solves the above puzzle.  Next up, "Evil" difficulty.
+Current "Evil" difficulty output.
 ```
+savedSudoku-Evil01.txt contains:
+3 0 0  0 9 0  0 0 8
+0 0 0  7 0 0  0 9 0
+0 0 4  0 8 6  0 0 0
+
+0 0 6  0 0 0  0 2 0
+0 9 0  1 3 5  0 7 0
+0 5 0  0 0 0  9 0 0
+
+0 0 0  9 2 0  1 0 0
+0 6 0  0 0 3  0 0 0
+5 0 0  0 1 0  0 0 9
+Running simpleElim | Running hiddenSingle | hiddenSingle 6 found for B1
+Cell B1 solved as 6
+
+Running simpleElim | Running hiddenSingle | hiddenSingle 9 found for C1
+Cell C1 solved as 9
+
+Running simpleElim | Running hiddenSingle | hiddenSingle 3 found for C4
+Cell C4 solved as 3
+
+Running simpleElim | Running hiddenSingle | hiddenSingle 9 found for D6
+Cell D6 solved as 9
+
+Running simpleElim | Running hiddenSingle | hiddenSingle 6 found for F5
+Cell F5 solved as 6
+
+Running simpleElim | Running hiddenSingle | hiddenSingle 9 found for H3
+Cell H3 solved as 9
+
+Running simpleElim | Running hiddenSingle | hiddenSingle 1 found for H1
+Cell H1 solved as 1
+
+Running simpleElim | Running hiddenSingle | hiddenSingle 6 found for I4
+Cell I4 solved as 6
+
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Naked Triplet<D1, D4, D5>: Eliminating [7, 4, 8] from D2
+Naked Triplet<D1, D4, D5>: Eliminating [7, 4, 8] from D7
+Naked Triplet<D1, D4, D5>: Eliminating [7, 4, 8] from D9
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Hidden Pair<D2, F3>[1, 3]: Eliminating other values.
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Hidden Pair<G8, G9>[5, 6]: Eliminating other values.
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Naked Pair<G8, G9>: Eliminating [6, 5] from H7
+Naked Pair<G8, G9>: Eliminating [6, 5] from H8
+Naked Pair<G8, G9>: Eliminating [6, 5] from H9
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Finished
 Puzzle :
-+ - +   + - +   + - +     * - *   + - +   + - +     + - +   + - +   * - *
-| 6 |   | 8 |   | 9 |     | 5 |   | 3 |   | 1 |     | 4 |   | 7 |   | 2 |
-+ - +   + - +   + - +     * - *   + - +   + - +     + - +   + - +   * - *
+* - *   1 2 _   1 2 _     _ 2 _   * - *   1 2 _     _ 2 _   1 _ _   * - *
+| 3 |   _ _ _   _ 5 _     4 5 _   | 9 |   4 _ _     4 5 6   4 5 6   | 8 |
+* - *   7 _ _   7 _ _     _ _ _   * - *   _ _ _     7 _ _   _ _ _   * - *
 
-* - *   * - *   + - +     * - *   + - +   * - *     * - *   + - +   + - +
-| 1 |   | 7 |   | 2 |     | 4 |   | 8 |   | 6 |     | 5 |   | 3 |   | 9 |
-* - *   * - *   + - +     * - *   + - +   * - *     * - *   + - +   + - +
++ - +   1 2 _   1 2 _     * - *   _ _ _   1 2 _     _ 2 3   * - *   1 2 3
+| 6 |   _ _ _   _ 5 _     | 7 |   4 5 _   4 _ _     4 5 _   | 9 |   4 5 _
++ - +   _ 8 _   _ 8 _     * - *   _ _ _   _ _ _     _ _ _   * - *   _ _ _
 
-* - *   + - +   + - +     * - *   * - *   + - +     + - +   + - +   + - +
-| 5 |   | 4 |   | 3 |     | 7 |   | 9 |   | 2 |     | 6 |   | 1 |   | 8 |
-* - *   + - +   + - +     * - *   * - *   + - +     + - +   + - +   + - +
-
-
-+ - +   * - *   + - +     + - +   + - +   + - +     * - *   + - +   + - +
-| 9 |   | 3 |   | 7 |     | 1 |   | 6 |   | 5 |     | 2 |   | 8 |   | 4 |
-+ - +   * - *   + - +     + - +   + - +   + - +     * - *   + - +   + - +
-
-+ - +   + - +   * - *     + - +   * - *   + - +     * - *   + - +   + - +
-| 8 |   | 5 |   | 4 |     | 9 |   | 2 |   | 3 |     | 1 |   | 6 |   | 7 |
-+ - +   + - +   * - *     + - +   * - *   + - +     * - *   + - +   + - +
-
-+ - +   + - +   * - *     + - +   + - +   + - +     + - +   * - *   + - +
-| 2 |   | 1 |   | 6 |     | 8 |   | 4 |   | 7 |     | 3 |   | 9 |   | 5 |
-+ - +   + - +   * - *     + - +   + - +   + - +     + - +   * - *   + - +
++ - +   1 2 _   * - *     + - +   * - *   * - *     _ 2 _   1 _ _   1 2 _
+| 9 |   _ _ _   | 4 |     | 3 |   | 8 |   | 6 |     _ 5 _   _ 5 _   _ 5 _
++ - +   7 _ _   * - *     + - +   * - *   * - *     7 _ _   _ _ _   7 _ _
 
 
-+ - +   + - +   + - +     + - +   * - *   * - *     + - +   + - +   * - *
-| 7 |   | 2 |   | 5 |     | 3 |   | 1 |   | 8 |     | 9 |   | 4 |   | 6 |
-+ - +   + - +   + - +     + - +   * - *   * - *     + - +   + - +   * - *
+_ _ _   1 _ 3   * - *     _ _ _   _ _ _   + - +     _ _ 3   * - *   1 _ 3
+4 _ _   _ _ _   | 6 |     4 _ _   4 _ _   | 9 |     _ 5 _   | 2 |   _ 5 _
+7 8 _   _ _ _   * - *     _ 8 _   7 _ _   + - +     _ _ _   * - *   _ _ _
 
-+ - +   + - +   * - *     * - *   + - +   * - *     + - +   * - *   * - *
-| 3 |   | 9 |   | 8 |     | 6 |   | 5 |   | 4 |     | 7 |   | 2 |   | 1 |
-+ - +   + - +   * - *     * - *   + - +   * - *     + - +   * - *   * - *
+_ 2 _   * - *   _ 2 _     * - *   * - *   * - *     _ _ _   * - *   _ _ _
+4 _ _   | 9 |   _ _ _     | 1 |   | 3 |   | 5 |     4 _ 6   | 7 |   4 _ 6
+_ 8 _   * - *   _ 8 _     * - *   * - *   * - *     _ 8 _   * - *   _ _ _
 
-* - *   + - +   + - +     + - +   + - +   * - *     + - +   + - +   + - +
-| 4 |   | 6 |   | 1 |     | 2 |   | 7 |   | 9 |     | 8 |   | 5 |   | 3 |
-* - *   + - +   + - +     + - +   + - +   * - *     + - +   + - +   + - +
+_ 2 _   * - *   1 _ 3     _ 2 _   + - +   _ 2 _     * - *   1 _ 3   1 _ 3
+4 _ _   | 5 |   _ _ _     4 _ _   | 6 |   4 _ _     | 9 |   4 _ _   4 _ _
+7 8 _   * - *   _ _ _     _ 8 _   + - +   7 8 _     * - *   _ 8 _   _ _ _
+
+
+_ _ _   _ _ 3   _ _ 3     * - *   * - *   _ _ _     * - *   _ _ _   _ _ _
+4 _ _   4 _ _   _ _ _     | 9 |   | 2 |   4 _ _     | 1 |   _ 5 6   _ 5 6
+7 8 _   7 8 _   7 8 _     * - *   * - *   7 8 _     * - *   _ _ _   _ _ _
+
++ - +   * - *   + - +     _ _ _   _ _ _   * - *     _ 2 _   _ _ _   _ 2 _
+| 1 |   | 6 |   | 9 |     4 5 _   4 5 _   | 3 |     4 _ _   4 _ _   4 _ _
++ - +   * - *   + - +     _ 8 _   7 _ _   * - *     7 8 _   _ 8 _   7 _ _
+
+* - *   _ 2 3   _ 2 3     + - +   * - *   _ _ _     _ 2 3   _ _ 3   * - *
+| 5 |   4 _ _   _ _ _     | 6 |   | 1 |   4 _ _     4 _ _   4 _ _   | 9 |
+* - *   7 8 _   7 8 _     + - +   * - *   7 8 _     7 8 _   _ 8 _   * - *
 ```
+
