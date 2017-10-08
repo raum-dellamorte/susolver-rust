@@ -51,3 +51,13 @@ pub fn plistSetToVec(se: &HashSet<u8>) -> Vec<u8> {
   }
   out
 }
+
+pub fn keep<F>(vals: &Vec<u8>, f: F) -> Vec<u8> 
+  where F: Fn(u8) -> bool
+{
+  let mut out: Vec<u8> = Vec::new();
+  for v in vals.into_iter() {
+    if f(*v) { out.push(*v) }
+  }
+  out
+}

@@ -3,7 +3,7 @@
 
 use std::collections::HashSet;
 
-use susolver::util::{c, mod9, grp3, grp9};
+use susolver::util::{c, mod3, mod9, grp3, grp9};
 
 #[derive(Debug, Copy, Clone)]
 pub struct SuCell {
@@ -31,15 +31,15 @@ impl SuCell {
   }
   
   pub fn bcol(&self) -> u8 {
-    grp3(self.col())
+    mod3(self.col())
   }
   
   pub fn brow(&self) -> u8 {
-    grp3(self.row())
+    mod3(self.row())
   }
   
   pub fn block(&self) -> u8 {
-    ((self.brow() - 1) * 3) + self.bcol()
+    ((grp3(self.row()) - 1) * 3) + grp3(self.col())
   }
   
   pub fn locS(&self) -> String {
@@ -67,7 +67,7 @@ impl SuCell {
       for i in 0..9 {
         if !self.pmarks[i] {continue}
         self.val = (i + 1) as u8;
-        println!("Cell {} solved as {}\n", self.locS(), self.val);
+        println!("\nCell {} solved as {}", self.locS(), self.val);
         break;
       }
     }

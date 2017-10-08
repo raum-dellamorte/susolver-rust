@@ -6,7 +6,7 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::collections::HashSet;
 
-use susolver::util::{c, plistRemainder, plistSetToVec};
+use susolver::util::{c, keep, plistRemainder, plistSetToVec};
 use susolver::sucell::SuCell;
 
 //#[derive(Clone)]
@@ -60,11 +60,20 @@ impl SuPuzzle {
     }
     out
   }
+  pub fn pmarksAll(&self, cels: &Vec<u8>) -> HashSet<u8> {
+    let mut out: HashSet<u8> = HashSet::new();
+    for cn in (*cels).iter() {
+      let cel = self.cell(*cn);
+      if cel.solved() { continue; }
+      for i in (cel.pmarksSet()).into_iter() { out.insert(i); }
+    }
+    out
+  }
   pub fn block(&self, n: u8) -> Vec<u8> {
     let mut out = Vec::new();
     for i in (1_u8)..(82_u8) {
       if self.cell(i).block() == n {
-        out.push(self.cell(i).pos)
+        out.push(i)
       }
       if out.len() == 9 { break; }
     }
@@ -74,7 +83,7 @@ impl SuPuzzle {
     let mut out = Vec::new();
     for i in (1_u8)..(82_u8) {
       if self.cell(i).row() == n {
-        out.push(self.cell(i).pos)
+        out.push(i)
       }
       if out.len() == 9 { break; }
     }
@@ -84,9 +93,31 @@ impl SuPuzzle {
     let mut out = Vec::new();
     for i in (1_u8)..(82_u8) {
       if self.cell(i).col() == n {
-        out.push(self.cell(i).pos)
+        out.push(i)
       }
       if out.len() == 9 { break; }
+    }
+    out
+  }
+  pub fn brow(&self, bn: u8, brn: u8) -> Vec<u8> {
+    let mut out = Vec::new();
+    let b = self.block(bn);
+    for i in 0..9 {
+      if self.cell(b[i]).brow() == brn {
+        out.push(b[i])
+      }
+      if out.len() == 3 { break; }
+    }
+    out
+  }
+  pub fn bcol(&self, bn: u8, bcn: u8) -> Vec<u8> {
+    let mut out = Vec::new();
+    let b = self.block(bn);
+    for i in 0..9 {
+      if self.cell(b[i]).bcol() == bcn {
+        out.push(b[i])
+      }
+      if out.len() == 3 { break; }
     }
     out
   }
@@ -229,14 +260,16 @@ impl SuPuzzle {
   }
   pub fn solve(&mut self) {
     loop {
-      print!("Running simpleElim | ");
-      self.simpleElim();
-      print!("Running hiddenSingle | ");
-      if self.hiddenSingle() { continue; }
-      print!("Running nakedPairsTrips | ");
-      if self.nakedPairsTrips() { continue; }
-      print!("Running hiddenPairsTrips | ");
-      if self.hiddenPairsTrips() { continue; }
+      print!("Running simpleElim");
+      if self.simpleElim() { print!("\n"); } else { print!(" | "); }
+      print!("Running hiddenSingle");
+      if self.hiddenSingle() { continue; } else { print!(" | "); }
+      print!("Running nakedPairsTrips");
+      if self.nakedPairsTrips() { continue; } else { print!(" | "); }
+      print!("Running hiddenPairsTrips");
+      if self.hiddenPairsTrips() { continue; } else { print!(" | "); }
+      print!("Running pointingPairs");
+      if self.pointingPairs() { continue; } else { print!(" | "); }
       println!("Finished");
       break
     }
@@ -250,7 +283,8 @@ impl SuPuzzle {
         for tpos in tmp.iter() {
           let tval = (*self).cell(*tpos).val;
           if self.cell(*cp).canBe(tval) {
-            let mut cel = self.cell_mut(*cp);
+            let cel = self.cell_mut(*cp);
+            print!(" | {} drop {}", cel.locS(), tval);
             cel.elimVal(tval);
             out = true;
             if cel.val > 0_u8 { continue 'outer; }
@@ -287,8 +321,8 @@ impl SuPuzzle {
               if i == cand { continue; }
               elims.push((i + 1) as u8);
             }
-            let mut cel = self.cell_mut(*cp);
-            println!("hiddenSingle {} found for {}", cand + 1, cel.locS());
+            let cel = self.cell_mut(*cp);
+            print!("\nhiddenSingle {} found for {}", cand + 1, cel.locS());
             cel.elimVals(&elims);
             out = true;
             break 'outer;
@@ -324,11 +358,12 @@ impl SuPuzzle {
             if toFix.len() > 0 {
               for fcp in toFix.iter() {
                 let tmpStr = format!("{}, {}", self.cell(tc1).locS(), self.cell(tc2).locS());
-                let mut fcel = self.cell_mut(*fcp);
-                println!("Naked Pair<{}>: Eliminating [{}, {}] from {}", 
+                let fcel = self.cell_mut(*fcp);
+                print!("\nNaked Pair<{}>: Eliminating [{}, {}] from {}", 
                   tmpStr, fvals[0], fvals[1], fcel.locS());
                 fcel.elimVals(&fvals);
               }
+              print!("\n");
               out = true;
               break 'outer;
             }
@@ -351,11 +386,12 @@ impl SuPuzzle {
               if toFix.len() > 0 {
                 for fcp in toFix.iter() {
                   let tmpStr = format!("{}, {}, {}", self.cell(tc1).locS(), self.cell(tc2).locS(), self.cell(tc3).locS());
-                  let mut fcel = self.cell_mut(*fcp);
-                  println!("Naked Triplet<{}>: Eliminating [{}, {}, {}] from {}", 
+                  let fcel = self.cell_mut(*fcp);
+                  print!("\nNaked Triplet<{}>: Eliminating [{}, {}, {}] from {}", 
                     tmpStr, fvals[0], fvals[1], fvals[2], fcel.locS());
                   fcel.elimVals(&fvals);
                 }
+                print!("\n");
                 out = true;
                 break 'outer;
               }
@@ -403,7 +439,7 @@ impl SuPuzzle {
                 if se.len() == 7 {
                   // Hidden Pair Found!
                   let pair = plistRemainder(&se);
-                  println!("Hidden Pair<{}, {}>[{}, {}]: Eliminating other values.", 
+                  println!("\nHidden Pair<{}, {}>[{}, {}]: Eliminating other values.", 
                     self.cell(cel1p).locS(), self.cell(cel2p).locS(), pair[0], pair[1]);
                   let fvals = plistSetToVec(&se);
                   self.cell_mut(cel1p).elimVals(&fvals);
@@ -424,7 +460,7 @@ impl SuPuzzle {
                 if se.len() == 6 {
                   // Hidden Triplet Found!
                   let trip = plistRemainder(&se);
-                  println!("Hidden Triplet<{}, {}, {}>[{}, {}, {}]: Eliminating other values.", 
+                  println!("\nHidden Triplet<{}, {}, {}>[{}, {}, {}]: Eliminating other values.", 
                     self.cell(cel3p).locS(), self.cell(cel1p).locS(), self.cell(cel2p).locS(), 
                     trip[0], trip[1], trip[2]);
                   let fvals = plistSetToVec(&se);
@@ -444,15 +480,66 @@ impl SuPuzzle {
     }
     out
   }
-  /*pub fn pointingPairs(&mut self) -> bool {
+  pub fn pointingPairs(&mut self) -> bool {
     let mut out = false;
     'outer: loop {
       for bn in (1_u8)..(10_u8) {
-        for rcn in (1_u8)..(4_u8) {
-          
+        let b = self.block(bn);
+        for rc in 0..2 {
+          for rcn in (1_u8)..(4_u8) {
+            let (grp_a, grp_b) = match rc {
+              0 => { (keep(&b, |i| self.cell(i).brow() == rcn ), keep(&b, |i| self.cell(i).brow() != rcn )) }
+              _ => { (keep(&b, |i| self.cell(i).bcol() == rcn ), keep(&b, |i| self.cell(i).bcol() != rcn )) }
+            };
+            let pmx_a = self.pmarksAll(&grp_a);
+            let pmx_b = self.pmarksAll(&grp_b);
+            let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
+            if diff.len() == 1 {
+              // Found pointing pair if remaining pmark exists in a cell in the same row or col but outside the current block
+              let pmk: Vec<u8> = diff.into_iter().collect();
+              let pmk: u8 = pmk[0];
+              let grp_elim = {
+                let cels: Vec<u8> = (1_u8..82_u8).into_iter().collect();
+                let tgrp_elim = match rc {
+                  0 => {
+                    let rn = self.cell(grp_a[0]).row();
+                    keep(&cels, |i| match self.cell(i) {
+                      tcel if (tcel.block() != bn) && (tcel.row() == rn) => { true }
+                      _ => { false }
+                    })
+                  }
+                  _ => {
+                    let cn = self.cell(grp_a[0]).col();
+                    keep(&cels, |i| match self.cell(i) {
+                      tcel if (tcel.block() != bn) && (tcel.col() == cn) => { true }
+                      _ => { false }
+                    })
+                  }
+                };
+                keep(&tgrp_elim, |i| match self.cell(i) {
+                  tcel if tcel.pmarksSet().contains(&pmk) => { true }
+                  _ => { false }
+                })
+              };
+              if grp_elim.len() > 0 {
+                // Found pointing pair eliminations!
+                for fcn in grp_elim.iter() {
+                  print!("\nPointing Pair<Block {}, {} {}>: Eliminating {} from {}.", 
+                    bn, if rc == 0 { "BRow" } else { "BCol" }, rcn, pmk, self.cell(*fcn).locS());
+                  let fcel = self.cell_mut(*fcn);
+                  fcel.elimVal(pmk);
+                }
+                print!("\n");
+                out = true;
+                break 'outer;
+              }
+            }
+          }
         }
       }
+      // We've found nothing if we got this far.
+      break 'outer;
     }
     out
-  }*/
+  }
 }
