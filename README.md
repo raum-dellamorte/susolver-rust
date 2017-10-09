@@ -19,6 +19,7 @@ Working Strategies:
 - Naked Pairs and Triplets
 - Hidden Pairs and Triplets (Triplets not tested but should work)
 - *NEW* Pointing Pairs
+- *NEW* Box Line Reduction (Untested)
 
 **Road Map:** Check out [The Sudoku Wiki](http://www.sudokuwiki.org/sudoku.htm) for all the horrific strategies I have to teach a machine to do.  They already did it, but so what, it's still an excellent excercise in logic.  I write all my sudoku solving functions based on the descriptions of strategies listed there.  Also, I need to be able to select available puzzle files instead of hard coding which puzzle to load, a way of entering a puzzle from within the program and saving it, and a GUI to make both of those things easier for the user.  Also, I *could* make it a library for use in Python and Ruby or whatever.
 
@@ -115,8 +116,48 @@ savedSudoku-Evil01.txt contains:
 0 0 0  9 2 0  1 0 0
 0 6 0  0 0 3  0 0 0
 5 0 0  0 1 0  0 0 9
-cell: 30, block: 4, brow: 1, bcol: 3
-Running simpleElim | A2 drop 3 | A2 drop 9 | A2 drop 8 | A2 drop 4 | A2 drop 5 | A2 drop 6 | A3 drop 3 | A3 drop 9 | A3 drop 8 | A3 drop 4 | A3 drop 6 | A4 drop 3 | A4 drop 9 | A4 drop 8 | A4 drop 7 | A4 drop 6 | A4 drop 1 | A6 drop 3 | A6 drop 9 | A6 drop 8 | A6 drop 7 | A6 drop 6 | A6 drop 5 | A7 drop 3 | A7 drop 9 | A7 drop 8 | A7 drop 1 | A8 drop 3 | A8 drop 9 | A8 drop 8 | A8 drop 2 | A8 drop 7 | B1 drop 3 | B1 drop 7 | B1 drop 9 | B1 drop 4 | B1 drop 5 | B2 drop 3 | B2 drop 7 | B2 drop 9 | B2 drop 4 | B2 drop 5 | B2 drop 6 | B3 drop 3 | B3 drop 7 | B3 drop 9 | B3 drop 4 | B3 drop 6 | B5 drop 9 | B5 drop 7 | B5 drop 8 | B5 drop 6 | B5 drop 3 | B5 drop 2 | B5 drop 1 | B6 drop 9 | B6 drop 7 | B6 drop 8 | B6 drop 6 | B6 drop 5 | B6 drop 3 | B7 drop 8 | B7 drop 7 | B7 drop 9 | B7 drop 1 | B9 drop 8 | B9 drop 7 | B9 drop 9 | C1 drop 3 | C1 drop 4 | C1 drop 8 | C1 drop 6 | C1 drop 5 | C2 drop 3 | C2 drop 4 | C2 drop 8 | C2 drop 6 | C2 drop 9 | C2 drop 5 | C4 drop 9 | C4 drop 7 | C4 drop 4 | C4 drop 8 | C4 drop 6 | C4 drop 1 | C7 drop 8 | C7 drop 9 | C7 drop 4 | C7 drop 6 | C7 drop 1 | C8 drop 8 | C8 drop 9 | C8 drop 4 | C8 drop 6 | C8 drop 2 | C8 drop 7 | C9 drop 8 | C9 drop 9 | C9 drop 4 | C9 drop 6 | D1 drop 3 | D1 drop 6 | D1 drop 2 | D1 drop 9 | D1 drop 5 | D2 drop 6 | D2 drop 2 | D2 drop 9 | D2 drop 5 | D4 drop 7 | D4 drop 6 | D4 drop 2 | D4 drop 1 | D4 drop 3 | D4 drop 5 | D4 drop 9 | D5 drop 9 | D5 drop 8 | D5 drop 6 | D5 drop 2 | D5 drop 1 | D5 drop 3 | D5 drop 5 | D6 drop 6 | D6 drop 2 | D6 drop 1 | D6 drop 3 | D6 drop 5 | D7 drop 6 | D7 drop 2 | D7 drop 7 | D7 drop 9 | D7 drop 1 | D9 drop 8 | D9 drop 6 | D9 drop 2 | D9 drop 7 | D9 drop 9 | E1 drop 3 | E1 drop 6 | E1 drop 9 | E1 drop 1 | E1 drop 5 | E1 drop 7 | E3 drop 4 | E3 drop 6 | E3 drop 9 | E3 drop 1 | E3 drop 3 | E3 drop 5 | E3 drop 7 | E7 drop 2 | E7 drop 9 | E7 drop 1 | E7 drop 3 | E7 drop 5 | E7 drop 7 | E9 drop 8 | E9 drop 2 | E9 drop 9 | E9 drop 1 | E9 drop 3 | E9 drop 5 | E9 drop 7 | F1 drop 3 | F1 drop 6 | F1 drop 9 | F1 drop 5 | F3 drop 4 | F3 drop 6 | F3 drop 9 | F3 drop 5 | F4 drop 7 | F4 drop 1 | F4 drop 3 | F4 drop 5 | F4 drop 9 | F5 drop 9 | F5 drop 8 | F5 drop 1 | F5 drop 3 | F5 drop 5 | F5 drop 2 | F6 drop 6 | F6 drop 1 | F6 drop 3 | F6 drop 5 | F6 drop 9 | F8 drop 9 | F8 drop 2 | F8 drop 7 | F8 drop 5 | F9 drop 8 | F9 drop 2 | F9 drop 7 | F9 drop 5 | F9 drop 9 | G1 drop 3 | G1 drop 9 | G1 drop 2 | G1 drop 1 | G1 drop 6 | G1 drop 5 | G2 drop 9 | G2 drop 5 | G2 drop 2 | G2 drop 1 | G2 drop 6 | G3 drop 4 | G3 drop 6 | G3 drop 9 | G3 drop 2 | G3 drop 1 | G3 drop 5 | G6 drop 6 | G6 drop 5 | G6 drop 9 | G6 drop 2 | G6 drop 1 | G6 drop 3 | G8 drop 9 | G8 drop 2 | G8 drop 7 | G8 drop 1 | G9 drop 8 | G9 drop 9 | G9 drop 2 | G9 drop 1 | H1 drop 3 | H1 drop 6 | H1 drop 5 | H3 drop 4 | H3 drop 6 | H3 drop 3 | H3 drop 5 | H4 drop 7 | H4 drop 1 | H4 drop 9 | H4 drop 2 | H4 drop 6 | H4 drop 3 | H5 drop 9 | H5 drop 8 | H5 drop 3 | H5 drop 2 | H5 drop 6 | H5 drop 1 | H7 drop 9 | H7 drop 1 | H7 drop 6 | H7 drop 3 | H8 drop 9 | H8 drop 2 | H8 drop 7 | H8 drop 1 | H8 drop 6 | H8 drop 3 | H9 drop 8 | H9 drop 1 | H9 drop 6 | H9 drop 3 | H9 drop 9 | I2 drop 9 | I2 drop 5 | I2 drop 6 | I2 drop 1 | I3 drop 4 | I3 drop 6 | I3 drop 5 | I3 drop 1 | I3 drop 9 | I4 drop 7 | I4 drop 1 | I4 drop 9 | I4 drop 2 | I4 drop 3 | I4 drop 5 | I6 drop 6 | I6 drop 5 | I6 drop 9 | I6 drop 2 | I6 drop 3 | I6 drop 1 | I7 drop 9 | I7 drop 1 | I7 drop 5 | I8 drop 9 | I8 drop 2 | I8 drop 7 | I8 drop 1 | I8 drop 5
+Running simpleElim | A2 drop 3 | A2 drop 9 | A2 drop 8 | A2 drop 4 | A2 drop 5 | A2 drop 6
+ | A3 drop 3 | A3 drop 9 | A3 drop 8 | A3 drop 4 | A3 drop 6 | A4 drop 3 | A4 drop 9
+ | A4 drop 8 | A4 drop 7 | A4 drop 6 | A4 drop 1 | A6 drop 3 | A6 drop 9 | A6 drop 8
+ | A6 drop 7 | A6 drop 6 | A6 drop 5 | A7 drop 3 | A7 drop 9 | A7 drop 8 | A7 drop 1
+ | A8 drop 3 | A8 drop 9 | A8 drop 8 | A8 drop 2 | A8 drop 7 | B1 drop 3 | B1 drop 7
+ | B1 drop 9 | B1 drop 4 | B1 drop 5 | B2 drop 3 | B2 drop 7 | B2 drop 9 | B2 drop 4
+ | B2 drop 5 | B2 drop 6 | B3 drop 3 | B3 drop 7 | B3 drop 9 | B3 drop 4 | B3 drop 6 
+ | B5 drop 9 | B5 drop 7 | B5 drop 8 | B5 drop 6 | B5 drop 3 | B5 drop 2 | B5 drop 1 
+ | B6 drop 9 | B6 drop 7 | B6 drop 8 | B6 drop 6 | B6 drop 5 | B6 drop 3 | B7 drop 8 
+ | B7 drop 7 | B7 drop 9 | B7 drop 1 | B9 drop 8 | B9 drop 7 | B9 drop 9 | C1 drop 3 
+ | C1 drop 4 | C1 drop 8 | C1 drop 6 | C1 drop 5 | C2 drop 3 | C2 drop 4 | C2 drop 8 
+ | C2 drop 6 | C2 drop 9 | C2 drop 5 | C4 drop 9 | C4 drop 7 | C4 drop 4 | C4 drop 8 
+ | C4 drop 6 | C4 drop 1 | C7 drop 8 | C7 drop 9 | C7 drop 4 | C7 drop 6 | C7 drop 1 
+ | C8 drop 8 | C8 drop 9 | C8 drop 4 | C8 drop 6 | C8 drop 2 | C8 drop 7 | C9 drop 8 
+ | C9 drop 9 | C9 drop 4 | C9 drop 6 | D1 drop 3 | D1 drop 6 | D1 drop 2 | D1 drop 9 
+ | D1 drop 5 | D2 drop 6 | D2 drop 2 | D2 drop 9 | D2 drop 5 | D4 drop 7 | D4 drop 6 
+ | D4 drop 2 | D4 drop 1 | D4 drop 3 | D4 drop 5 | D4 drop 9 | D5 drop 9 | D5 drop 8 
+ | D5 drop 6 | D5 drop 2 | D5 drop 1 | D5 drop 3 | D5 drop 5 | D6 drop 6 | D6 drop 2 
+ | D6 drop 1 | D6 drop 3 | D6 drop 5 | D7 drop 6 | D7 drop 2 | D7 drop 7 | D7 drop 9 
+ | D7 drop 1 | D9 drop 8 | D9 drop 6 | D9 drop 2 | D9 drop 7 | D9 drop 9 | E1 drop 3 
+ | E1 drop 6 | E1 drop 9 | E1 drop 1 | E1 drop 5 | E1 drop 7 | E3 drop 4 | E3 drop 6 
+ | E3 drop 9 | E3 drop 1 | E3 drop 3 | E3 drop 5 | E3 drop 7 | E7 drop 2 | E7 drop 9 
+ | E7 drop 1 | E7 drop 3 | E7 drop 5 | E7 drop 7 | E9 drop 8 | E9 drop 2 | E9 drop 9 
+ | E9 drop 1 | E9 drop 3 | E9 drop 5 | E9 drop 7 | F1 drop 3 | F1 drop 6 | F1 drop 9 
+ | F1 drop 5 | F3 drop 4 | F3 drop 6 | F3 drop 9 | F3 drop 5 | F4 drop 7 | F4 drop 1 
+ | F4 drop 3 | F4 drop 5 | F4 drop 9 | F5 drop 9 | F5 drop 8 | F5 drop 1 | F5 drop 3 
+ | F5 drop 5 | F5 drop 2 | F6 drop 6 | F6 drop 1 | F6 drop 3 | F6 drop 5 | F6 drop 9 
+ | F8 drop 9 | F8 drop 2 | F8 drop 7 | F8 drop 5 | F9 drop 8 | F9 drop 2 | F9 drop 7 
+ | F9 drop 5 | F9 drop 9 | G1 drop 3 | G1 drop 9 | G1 drop 2 | G1 drop 1 | G1 drop 6 
+ | G1 drop 5 | G2 drop 9 | G2 drop 5 | G2 drop 2 | G2 drop 1 | G2 drop 6 | G3 drop 4 
+ | G3 drop 6 | G3 drop 9 | G3 drop 2 | G3 drop 1 | G3 drop 5 | G6 drop 6 | G6 drop 5 
+ | G6 drop 9 | G6 drop 2 | G6 drop 1 | G6 drop 3 | G8 drop 9 | G8 drop 2 | G8 drop 7 
+ | G8 drop 1 | G9 drop 8 | G9 drop 9 | G9 drop 2 | G9 drop 1 | H1 drop 3 | H1 drop 6 
+ | H1 drop 5 | H3 drop 4 | H3 drop 6 | H3 drop 3 | H3 drop 5 | H4 drop 7 | H4 drop 1 
+ | H4 drop 9 | H4 drop 2 | H4 drop 6 | H4 drop 3 | H5 drop 9 | H5 drop 8 | H5 drop 3 
+ | H5 drop 2 | H5 drop 6 | H5 drop 1 | H7 drop 9 | H7 drop 1 | H7 drop 6 | H7 drop 3 
+ | H8 drop 9 | H8 drop 2 | H8 drop 7 | H8 drop 1 | H8 drop 6 | H8 drop 3 | H9 drop 8 
+ | H9 drop 1 | H9 drop 6 | H9 drop 3 | H9 drop 9 | I2 drop 9 | I2 drop 5 | I2 drop 6 
+ | I2 drop 1 | I3 drop 4 | I3 drop 6 | I3 drop 5 | I3 drop 1 | I3 drop 9 | I4 drop 7 
+ | I4 drop 1 | I4 drop 9 | I4 drop 2 | I4 drop 3 | I4 drop 5 | I6 drop 6 | I6 drop 5 
+ | I6 drop 9 | I6 drop 2 | I6 drop 3 | I6 drop 1 | I7 drop 9 | I7 drop 1 | I7 drop 5 
+ | I8 drop 9 | I8 drop 2 | I8 drop 7 | I8 drop 1 | I8 drop 5
 Running hiddenSingle
 hiddenSingle 6 found for B1
 Cell B1 solved as 6

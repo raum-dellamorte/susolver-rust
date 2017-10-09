@@ -60,6 +60,75 @@ impl SuPuzzle {
     }
     out
   }
+  pub fn cellsS(&self, cels: &Vec<u8>) -> String {
+    let mut out = String::new() + "<";
+    let mut sep = false;
+    for i in cels {
+      match sep {
+        true  => { out += ", "; }
+        false => { sep = true; }
+      }
+      out += &(self.cell(*i).locS());
+    }
+    out + ">"
+  }
+  pub fn puzString(&self) -> String {
+    let mut out = String::new();
+    for i in 0..81 {
+      let cel = self.cells[i];
+      out += &(format!("{}", cel.val));
+      out += &(String::from(if (cel.col() % 3_u8) == 0_u8 {
+        if cel.col() == 9_u8 {
+          if (cel.row() % 3_u8) == 0_u8 { "\n\n" } else { "\n" }
+        } else {
+          "  "
+        }
+      } else {
+        " "
+      }));
+    }
+    out
+  }
+  pub fn puzStringWithPMarks(&self) -> String {
+    let mut out = String::new();
+    for rc in 0..9 {
+      for pm in 0..3 {
+        for cc in 0..9 {
+          let cel = self.cells[(rc * 9) + cc];
+          if cel.val > 0 {
+            if pm != 1 {
+              if cel.clue {
+                out += &(String::from("* - *"));
+              } else {
+                out += &(String::from("+ - +"));
+              }
+            } else {
+              out += &(format!("| {} |", cel.val));
+            }
+          } else {
+            out += &(format!("{} {} {}", 
+              if cel.pmarks[0 + (pm * 3)] { format!("{}", 1 + (pm * 3)) } else {String::from("_")}, 
+              if cel.pmarks[1 + (pm * 3)] { format!("{}", 2 + (pm * 3)) } else {String::from("_")}, 
+              if cel.pmarks[2 + (pm * 3)] { format!("{}", 3 + (pm * 3)) } else {String::from("_")}));
+          }
+          if (cel.col() % 3_u8) != 0_u8 {
+            out += &(String::from("   "));
+          } else if cel.col() != 9_u8 {
+            out += &(String::from("     "));
+          } else {
+            if pm < 2 {
+              out += &(String::from("\n"));
+            } else if (cel.row() % 3_u8) != 0_u8 {
+              out += &(String::from("\n\n"));
+            } else {
+              out += &(String::from("\n\n\n"));
+            }
+          }
+        }
+      }
+    }
+    out
+  }
   pub fn pmarksAll(&self, cels: &Vec<u8>) -> HashSet<u8> {
     let mut out: HashSet<u8> = HashSet::new();
     for cn in (*cels).iter() {
@@ -118,63 +187,6 @@ impl SuPuzzle {
         out.push(b[i])
       }
       if out.len() == 3 { break; }
-    }
-    out
-  }
-  pub fn puzString(&self) -> String {
-    let mut out = String::new();
-    for i in 0..81 {
-      let cel = self.cells[i];
-      out += &(format!("{}", cel.val));
-      out += &(String::from(if (cel.col() % 3_u8) == 0_u8 {
-        if cel.col() == 9_u8 {
-          if (cel.row() % 3_u8) == 0_u8 { "\n\n" } else { "\n" }
-        } else {
-          "  "
-        }
-      } else {
-        " "
-      }));
-    }
-    out
-  }
-  pub fn puzStringWithPMarks(&self) -> String {
-    let mut out = String::new();
-    for rc in 0..9 {
-      for pm in 0..3 {
-        for cc in 0..9 {
-          let cel = self.cells[(rc * 9) + cc];
-          if cel.val > 0 {
-            if pm != 1 {
-              if cel.clue {
-                out += &(String::from("* - *"));
-              } else {
-                out += &(String::from("+ - +"));
-              }
-            } else {
-              out += &(format!("| {} |", cel.val));
-            }
-          } else {
-            out += &(format!("{} {} {}", 
-              if cel.pmarks[0 + (pm * 3)] { format!("{}", 1 + (pm * 3)) } else {String::from("_")}, 
-              if cel.pmarks[1 + (pm * 3)] { format!("{}", 2 + (pm * 3)) } else {String::from("_")}, 
-              if cel.pmarks[2 + (pm * 3)] { format!("{}", 3 + (pm * 3)) } else {String::from("_")}));
-          }
-          if (cel.col() % 3_u8) != 0_u8 {
-            out += &(String::from("   "));
-          } else if cel.col() != 9_u8 {
-            out += &(String::from("     "));
-          } else {
-            if pm < 2 {
-              out += &(String::from("\n"));
-            } else if (cel.row() % 3_u8) != 0_u8 {
-              out += &(String::from("\n\n"));
-            } else {
-              out += &(String::from("\n\n\n"));
-            }
-          }
-        }
-      }
     }
     out
   }
@@ -262,6 +274,7 @@ impl SuPuzzle {
     loop {
       print!("Running simpleElim");
       if self.simpleElim() { print!("\n"); } else { print!(" | "); }
+      if self.solvedCells().len() == 81 { break; }
       print!("Running hiddenSingle");
       if self.hiddenSingle() { continue; } else { print!(" | "); }
       print!("Running nakedPairsTrips");
@@ -270,9 +283,11 @@ impl SuPuzzle {
       if self.hiddenPairsTrips() { continue; } else { print!(" | "); }
       print!("Running pointingPairs");
       if self.pointingPairs() { continue; } else { print!(" | "); }
-      println!("Finished");
+      print!("Running boxLineReduction");
+      if self.boxLineReduction() { continue; } else { print!(" | "); }
       break
     }
+    println!("Finished");
   }
   pub fn simpleElim(&mut self) -> bool {
     let mut out = false;
@@ -498,6 +513,7 @@ impl SuPuzzle {
               // Found pointing pair if remaining pmark exists in a cell in the same row or col but outside the current block
               let pmk: Vec<u8> = diff.into_iter().collect();
               let pmk: u8 = pmk[0];
+              let grp_a = keep(&grp_a, |i| self.cell(i).canBe(pmk) );
               let grp_elim = {
                 let cels: Vec<u8> = (1_u8..82_u8).into_iter().collect();
                 let tgrp_elim = match rc {
@@ -523,11 +539,62 @@ impl SuPuzzle {
               };
               if grp_elim.len() > 0 {
                 // Found pointing pair eliminations!
+                print!("\nPointing Pair{}: Eliminating {} from {}.", 
+                  self.cellsS(&grp_a), pmk, self.cellsS(&grp_elim));
                 for fcn in grp_elim.iter() {
-                  print!("\nPointing Pair<Block {}, {} {}>: Eliminating {} from {}.", 
-                    bn, if rc == 0 { "BRow" } else { "BCol" }, rcn, pmk, self.cell(*fcn).locS());
                   let fcel = self.cell_mut(*fcn);
                   fcel.elimVal(pmk);
+                }
+                print!("\n");
+                out = true;
+                break 'outer;
+              }
+            }
+          }
+        }
+      }
+      // We've found nothing if we got this far.
+      break 'outer;
+    }
+    out
+  }
+  pub fn boxLineReduction(&mut self) -> bool {
+    let mut out = false;
+    'outer: loop {
+      for rcn in (1_u8)..(10_u8) {
+        for rc in 0..2 {
+          let trc = match rc {
+            0 => { self.row(rcn) }
+            _ => { self.col(rcn) }
+          };
+          for grp_n in (1_u8)..(4_u8) {
+            let grp_a = keep(&trc, |i| self.cell(i).block3() == grp_n ); 
+            let grp_b = keep(&trc, |i| self.cell(i).block3() != grp_n );
+            let pmx_a = self.pmarksAll(&grp_a);
+            let pmx_b = self.pmarksAll(&grp_b);
+            let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
+            if diff.len() > 0 {
+              // Found box line reduction if remaining pmarks exist in a cell in the same block but not the current row/col
+              let pmks: Vec<u8> = diff.clone().into_iter().collect();
+              let bn = self.cell(grp_a[0]).block();
+              let grp_elim = {
+                let b = self.block(bn);
+                let tgrp_elim = match rc {
+                  0 => { keep(&b, |i| self.cell(i).row() != grp_n ) }
+                  _ => { keep(&b, |i| self.cell(i).col() != grp_n ) }
+                };
+                keep(&tgrp_elim, |i| {
+                  let isect: Vec<u8> = self.cell(i).pmarksSet().intersection(&diff).cloned().collect();
+                  isect.len() > 0
+                })
+              };
+              if grp_elim.len() > 0 {
+                // Found box line reduction eliminations!
+                print!("\nBox Line Reduction{}: Eliminating {:?} from {}.", 
+                  self.cellsS(&grp_a), &pmks, self.cellsS(&grp_elim));
+                for fcn in grp_elim.iter() {
+                  let fcel = self.cell_mut(*fcn);
+                  fcel.elimVals(&pmks);
                 }
                 print!("\n");
                 out = true;
