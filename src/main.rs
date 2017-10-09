@@ -5,9 +5,9 @@ pub mod susolver;
 use susolver::supuzzle::SuPuzzle;
 
 fn main() {
-  let mut puz = SuPuzzle::new(&String::from("Evil01"));
-  // {
-  //   let c = &(puz.cell(30_u8));
+  let mut puz = SuPuzzle::new(&String::from("X-Wing01"));
+  // for i in 1..82_u8 {
+  //   let c = &(puz.cell(i));
   //   println!("cell: {}, block: {}, brow: {}, bcol: {}", (*c).pos, (*c).block(), (*c).brow(), (*c).bcol());
   // }
   puz.solve();
