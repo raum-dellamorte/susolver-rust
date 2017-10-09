@@ -42,8 +42,11 @@ impl SuCell {
     ((grp3(self.row()) - 1) * 3) + grp3(self.col())
   }
   
-  pub fn block3(&self) -> u8 {
-    mod3(self.block())
+  pub fn block3(&self, rc: isize) -> u8 {
+    match rc {
+      0 => { grp3(self.block()) }
+      _ => { mod3(self.block()) }
+    }
   }
   
   pub fn locS(&self) -> String {

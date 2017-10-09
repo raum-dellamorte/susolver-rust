@@ -568,8 +568,12 @@ impl SuPuzzle {
             _ => { self.col(rcn) }
           };
           for grp_n in (1_u8)..(4_u8) {
-            let grp_a = keep(&trc, |i| self.cell(i).block3() == grp_n ); 
-            let grp_b = keep(&trc, |i| self.cell(i).block3() != grp_n );
+            let cr = match rc {
+              0 => { 1 }
+              _ => { 0 }
+            };
+            let grp_a = keep(&trc, |i| self.cell(i).block3(cr) == grp_n ); 
+            let grp_b = keep(&trc, |i| self.cell(i).block3(cr) != grp_n );
             let pmx_a = self.pmarksAll(&grp_a);
             let pmx_b = self.pmarksAll(&grp_b);
             let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
@@ -580,9 +584,10 @@ impl SuPuzzle {
               let grp_elim = {
                 let b = self.block(bn);
                 let tgrp_elim = match rc {
-                  0 => { keep(&b, |i| self.cell(i).row() != grp_n ) }
-                  _ => { keep(&b, |i| self.cell(i).col() != grp_n ) }
+                  0 => { let t = self.cell(grp_a[0]).brow(); keep(&b, |i| self.cell(i).brow() != t ) }
+                  _ => { let t = self.cell(grp_a[0]).bcol(); keep(&b, |i| self.cell(i).bcol() != t ) }
                 };
+                //println!("Block {}: {}", bn, self.cellsS(&tgrp_elim));
                 keep(&tgrp_elim, |i| {
                   let isect: Vec<u8> = self.cell(i).pmarksSet().intersection(&diff).cloned().collect();
                   isect.len() > 0

@@ -19,7 +19,7 @@ Working Strategies:
 - Naked Pairs and Triplets
 - Hidden Pairs and Triplets (Triplets not tested but should work)
 - *NEW* Pointing Pairs
-- *NEW* Box Line Reduction (Untested)
+- *NEW* Box Line Reduction
 
 **Road Map:** Check out [The Sudoku Wiki](http://www.sudokuwiki.org/sudoku.htm) for all the horrific strategies I have to teach a machine to do.  They already did it, but so what, it's still an excellent excercise in logic.  I write all my sudoku solving functions based on the descriptions of strategies listed there.  Also, I need to be able to select available puzzle files instead of hard coding which puzzle to load, a way of entering a puzzle from within the program and saving it, and a GUI to make both of those things easier for the user.  Also, I *could* make it a library for use in Python and Ruby or whatever.
 
