@@ -57,14 +57,6 @@ impl SuCell {
     format!("{}{}", self.rowS(), self.colS())
   }
   
-  pub fn pmarksCopy(&self) -> [bool; 9] {
-    let mut pmc = [false; 9];
-    for i in 0..9 {
-      pmc[i] = self.pmarks[i];
-    }
-    pmc
-  }
-  
   pub fn pmarksSet(&self) -> HashSet<u8> {
     let mut out: HashSet<u8> = HashSet::new();
     for i in 0..9 {
@@ -89,8 +81,8 @@ impl SuCell {
     self.checkSolve();
   }
   
-  pub fn elimVals(&mut self, ns: &Vec<u8>) {
-    for n in (*ns).iter() {
+  pub fn elimVals(&mut self, ns: &[u8]) {
+    for n in ns {
       self.pmarks[c(*n)] = false;
     }
     self.checkSolve();
@@ -103,18 +95,14 @@ impl SuCell {
   pub fn canBe(&self, n: u8) -> bool {
     self.pmarks[c(n)]
   }
-  pub fn canBeAny(&self, ns: &Vec<u8>) -> bool {
+  pub fn canBeAny(&self, ns: &[u8]) -> bool {
     let mut out = false;
-    for n in (*ns).iter() {
+    for n in ns {
       out = out || self.pmarks[c(*n)];
     }
     out
   }
   pub fn canSee(&self, cel: &SuCell) -> bool {
-    let mut out: bool = false;
-    if (self.pos != cel.pos) && ((self.col() == cel.col()) || (self.row() == cel.row()) || (self.block() == cel.block())) {
-      out = true;
-    }
-    out
+    (self.pos != cel.pos) && ((self.col() == cel.col()) || (self.row() == cel.row()) || (self.block() == cel.block()))
   }
 }

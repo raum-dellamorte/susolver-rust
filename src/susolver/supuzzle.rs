@@ -15,7 +15,7 @@ pub struct SuPuzzle {
 }
 
 impl SuPuzzle {
-  pub fn new(puzfile: &String) -> SuPuzzle {
+  pub fn new(puzfile: &str) -> SuPuzzle {
     let mut puz: Vec<SuCell> = vec![];
     let filename = format!("savedSudoku-{}.txt", puzfile);
     let path = Path::new(&filename);
@@ -35,7 +35,7 @@ impl SuPuzzle {
       match n {
         Some(val) => {
           let valVal: u8 = val.parse::<u8>().unwrap_or(0_u8);
-          let clueVal = if valVal == 0 {false} else {true};
+          let clueVal = valVal != 0;
           let cel = SuCell {pos: i as u8, val: valVal, clue: clueVal, pmarks: [!clueVal; 9]};
           puz.push(cel);
         }
@@ -46,14 +46,11 @@ impl SuPuzzle {
   }
   pub fn cell(&self, n: u8) -> &SuCell { &(self.cells[c(n)]) }
   pub fn cell_mut(&mut self, n: u8) -> &mut SuCell { &mut (self.cells[c(n)]) }
-  pub fn cellsS(&self, cels: &Vec<u8>) -> String {
+  pub fn cellsS(&self, cels: &[u8]) -> String {
     let mut out = String::new() + "<";
     let mut sep = false;
     for i in cels {
-      match sep {
-        true  => { out += ", "; }
-        false => { sep = true; }
-      }
+      if sep { out += ", "; } else { sep = true; }
       out += &(self.cell(*i).locS());
     }
     out + ">"
@@ -93,7 +90,7 @@ impl SuPuzzle {
             }
           } else {
             out += &(format!("{} {} {}", 
-              if cel.pmarks[0 + (pm * 3)] { format!("{}", 1 + (pm * 3)) } else {String::from("_")}, 
+              if cel.pmarks[pm * 3]       { format!("{}", 1 + (pm * 3)) } else {String::from("_")}, 
               if cel.pmarks[1 + (pm * 3)] { format!("{}", 2 + (pm * 3)) } else {String::from("_")}, 
               if cel.pmarks[2 + (pm * 3)] { format!("{}", 3 + (pm * 3)) } else {String::from("_")}));
           }
@@ -101,30 +98,28 @@ impl SuPuzzle {
             out += &(String::from("   "));
           } else if cel.col() != 9_u8 {
             out += &(String::from("     "));
+          } else if pm < 2 {
+            out += &(String::from("\n"));
+          } else if (cel.row() % 3_u8) != 0_u8 {
+            out += &(String::from("\n\n"));
           } else {
-            if pm < 2 {
-              out += &(String::from("\n"));
-            } else if (cel.row() % 3_u8) != 0_u8 {
-              out += &(String::from("\n\n"));
-            } else {
-              out += &(String::from("\n\n\n"));
-            }
+            out += &(String::from("\n\n\n"));
           }
         }
       }
     }
     out
   }
-  pub fn pmarksAll(&self, cels: &Vec<u8>) -> HashSet<u8> {
+  pub fn pmarksAll(&self, cels: &[u8]) -> HashSet<u8> {
     let mut out: HashSet<u8> = HashSet::new();
     for cn in (*cels).iter() {
       let cel = self.cell(*cn);
       if cel.solved() { continue; }
-      for i in (cel.pmarksSet()).into_iter() { out.insert(i); }
+      for i in cel.pmarksSet() { out.insert(i); }
     }
     out
   }
-  fn sumExcept(&self, cels: &Vec<u8>, except: &HashSet<u8>) -> HashSet<u8> {
+  fn sumExcept(&self, cels: &[u8], except: &HashSet<u8>) -> HashSet<u8> {
     let mut out: HashSet<u8> = HashSet::new();
     for celn in (*cels).iter() {
       if except.contains(celn) { continue; }
@@ -170,36 +165,30 @@ impl SuPuzzle {
   }
   pub fn brow(&self, bn: u8, brn: u8) -> Vec<u8> {
     let mut out = Vec::new();
-    let b = self.block(bn);
-    for i in 0..9 {
-      if self.cell(b[i]).brow() == brn {
-        out.push(b[i])
-      }
+    for tc in self.block(bn) {
+      if self.cell(tc).brow() == brn { out.push(tc) }
       if out.len() == 3 { break; }
     }
     out
   }
   pub fn bcol(&self, bn: u8, bcn: u8) -> Vec<u8> {
     let mut out = Vec::new();
-    let b = self.block(bn);
-    for i in 0..9 {
-      if self.cell(b[i]).bcol() == bcn {
-        out.push(b[i])
-      }
+    for tc in self.block(bn) {
+      if self.cell(tc).bcol() == bcn { out.push(tc) }
       if out.len() == 3 { break; }
     }
     out
   }
   fn pmarks2(&self) -> Vec<u8> {
-    keep(&((1..82_u8).into_iter().collect()), |i| self.cell(i).pmarksSet().len() == 2 )
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| self.cell(i).pmarksSet().len() == 2 )
   }
   fn pmarks2or3(&self) -> Vec<u8> {
-    keep(&((1..82_u8).into_iter().collect()), |i| {
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
       let ln = self.cell(i).pmarksSet().len();
       (ln > 1) && (ln < 4)
     })
   }
-  fn pmarksUnion(&self, cels: &Vec<u8>) -> HashSet<u8> {
+  fn pmarksUnion(&self, cels: &[u8]) -> HashSet<u8> {
     let mut out = HashSet::new();
     for cel in cels {
       let tmp = self.cell(*cel).pmarksSet();
@@ -207,7 +196,7 @@ impl SuPuzzle {
     }
     out
   }
-  fn inSameGroup(&self, cels: &Vec<u8>) -> bool {
+  fn inSameGroup(&self, cels: &[u8]) -> bool {
     let mut btest: HashSet<u8> = HashSet::new();
     let mut rtest: HashSet<u8> = HashSet::new();
     let mut ctest: HashSet<u8> = HashSet::new();
@@ -219,41 +208,41 @@ impl SuPuzzle {
     }
     btest.len() == 1 || rtest.len() == 1 || ctest.len() == 1
   }
-  fn canSeeAll(&self, tcel: u8, cels: &Vec<u8>) -> bool {
+  fn canSeeAll(&self, tcel: u8, cels: &[u8]) -> bool {
     all_true(cels, |i| self.cell(i).canSee(self.cell(tcel)) )
   }
-  fn connectedAll(&self, cels: &Vec<u8>) -> Vec<u8> {
-    keep(&((1..82_u8).into_iter().collect()), |i| self.canSeeAll(i, cels) )
+  fn connectedAll(&self, cels: &[u8]) -> Vec<u8> {
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| self.canSeeAll(i, cels) )
   }
-  fn connectedAllUnsolved(&self, cels: &Vec<u8>) -> Vec<u8> {
-    keep(&((1..82_u8).into_iter().collect()), |i| {
+  fn connectedAllUnsolved(&self, cels: &[u8]) -> Vec<u8> {
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
       let tcel = self.cell(i);
       !tcel.solved() && self.canSeeAll(tcel.pos, cels)
     })
   }
   fn connectedCells(&self, cel: &SuCell) -> Vec<u8> {
-    keep(&((1..82_u8).into_iter().collect()), |i| {
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
       let tcel = self.cell(i);
       cel.canSee(tcel)
     })
   }
   fn connectedSolved(&self, cel: &SuCell) -> Vec<u8> {
-    keep(&((1..82_u8).into_iter().collect()), |i| {
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
       let tcel = self.cell(i);
       tcel.solved() && cel.canSee(tcel)
     })
   }
   fn connectedUnsolved(&self, cel: &SuCell) -> Vec<u8> {
-    keep(&((1..82_u8).into_iter().collect()), |i| {
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
       let tcel = self.cell(i);
       !tcel.solved() && cel.canSee(tcel)
     })
   }
   fn solvedCells(&self) -> Vec<u8> {
-    keep(&((1..82_u8).into_iter().collect()), |i| self.cell(i).solved() )
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| self.cell(i).solved() )
   }
   fn unsolvedCells(&self) -> Vec<u8> {
-    keep(&((1..82_u8).into_iter().collect()), |i| !self.cell(i).solved() )
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| !self.cell(i).solved() )
   }
   pub fn solve(&mut self) {
     loop {
@@ -261,15 +250,16 @@ impl SuPuzzle {
       if self.simpleElim() { print!("\n"); } else { print!(" | "); }
       if self.solvedCells().len() == 81 { break; }
       print!("Running hiddenSingle");
-      if self.hiddenSingle() { continue; } else { print!(" | "); }
-      print!("Running nakedPairsTrips");
-      if self.nakedPairsTrips() { continue; } else { print!(" | "); }
-      print!("Running hiddenPairsTrips");
-      if self.hiddenPairsTrips() { continue; } else { print!(" | "); }
-      print!("Running pointingPairs");
-      if self.pointingPairs() { continue; } else { print!(" | "); }
-      print!("Running boxLineReduction");
-      if self.boxLineReduction() { continue; } else { print!(" | "); }
+      if self.hiddenSingle() { continue; }
+      print!(" | Running nakedPairsTrips");
+      if self.nakedPairsTrips() { continue; }
+      print!(" | Running hiddenPairsTrips");
+      if self.hiddenPairsTrips() { continue; }
+      print!(" | Running pointingPairs");
+      if self.pointingPairs() { continue; }
+      print!(" | Running boxLineReduction");
+      if self.boxLineReduction() { continue; }
+      print!(" | ");
       break
     }
     println!("Finished");
@@ -278,10 +268,10 @@ impl SuPuzzle {
     let mut out = false;
     'outer: loop {
       let test = self.unsolvedCells();
-      for cp in test.iter() {
-        let tmp = self.connectedSolved(&self.cell(*cp));
-        for tpos in tmp.iter() {
-          let tval = (*self).cell(*tpos).val;
+      for cp in &test {
+        let tmp = self.connectedSolved(self.cell(*cp));
+        for tpos in &tmp {
+          let tval = self.cell(*tpos).val;
           if self.cell(*cp).canBe(tval) {
             let cel = self.cell_mut(*cp);
             print!(" | {} drop {}", cel.locS(), tval);
@@ -296,54 +286,49 @@ impl SuPuzzle {
     out
   }
   pub fn hiddenSingle(&mut self) -> bool {
-    let mut out = false;
-    'outer: loop {
-      let test = self.unsolvedCells();
-      for cp in test.iter() {
-        let pmarx = self.cell(*cp).pmarksCopy();
-        for cand in 0..9 {
-          if !pmarx[cand] {continue;}
-          let tmp = self.connectedUnsolved(self.cell(*cp));
-          let (mut cntc, mut cntr, mut cntb) = (0, 0, 0);
-          for tpos in tmp.iter() {
-            let tpmarx = self.cell(*tpos).pmarksCopy();
-            if tpmarx[cand] {
-              let cel = self.cell(*cp);
-              let tcel = self.cell(*tpos);
-              if cel.col() == tcel.col() { cntc += 1 }
-              if cel.row() == tcel.row() { cntr += 1 }
-              if cel.block() == tcel.block() { cntb += 1 }
-            }
-          }
-          if ((cntc == 0) || (cntr == 0)) || (cntb == 0) {
-            let mut elims: Vec<u8> = Vec::new();
-            for i in 0..9 {
-              if i == cand { continue; }
-              elims.push((i + 1) as u8);
-            }
-            let cel = self.cell_mut(*cp);
-            print!("\nhiddenSingle {} found for {}", cand + 1, cel.locS());
-            cel.elimVals(&elims);
-            out = true;
-            break 'outer;
+    let test = self.unsolvedCells();
+    for cp in &test {
+      let pmarx = self.cell(*cp).pmarks;
+      for cand in 0..9 {
+        if !pmarx[cand] {continue;}
+        let tmp = self.connectedUnsolved(self.cell(*cp));
+        let (mut cntc, mut cntr, mut cntb) = (0, 0, 0);
+        for tpos in &tmp {
+          let tpmarx = self.cell(*tpos).pmarks;
+          if tpmarx[cand] {
+            let cel = self.cell(*cp);
+            let tcel = self.cell(*tpos);
+            if cel.col() == tcel.col() { cntc += 1 }
+            if cel.row() == tcel.row() { cntr += 1 }
+            if cel.block() == tcel.block() { cntb += 1 }
           }
         }
+        if ((cntc == 0) || (cntr == 0)) || (cntb == 0) {
+          let mut elims: Vec<u8> = Vec::new();
+          for i in 0..9 {
+            if i == cand { continue; }
+            elims.push((i + 1) as u8);
+          }
+          let cel = self.cell_mut(*cp);
+          print!("\nhiddenSingle {} found for {}", cand + 1, cel.locS());
+          cel.elimVals(&elims);
+          return true;
+        }
       }
-      break 'outer;
     }
-    out
+    false
   }
-  fn fixNakedPairsTrips(&mut self, cels: &Vec<u8>, mut toFix: Vec<u8>, fvals: Vec<u8>) -> bool {
+  fn fixNakedPairsTrips(&mut self, cels: &[u8], mut toFix: Vec<u8>, fvals: Vec<u8>) -> bool {
     toFix.retain(|x| self.cell(*x).canBeAny(&fvals) ); // If there's nothing to fix, don't fix it.
-    if toFix.len() > 0 {
+    if !toFix.is_empty() {
       // Found Naked Pair or Trip!
       let pairtrip = match cels.len() {
         2 => { "Naked Pair" }
         3 => { "Naked Triplet" }
         _ => { return false }
       };
-      println!("\n{}{}: Eliminating {:?} from {}", pairtrip, self.cellsS(&cels), fvals, self.cellsS(&toFix));
-      for fcp in toFix.iter() {
+      println!("\n{}{}: Eliminating {:?} from {}", pairtrip, self.cellsS(cels), fvals, self.cellsS(&toFix));
+      for fcp in &toFix {
         let fcel = self.cell_mut(*fcp);
         fcel.elimVals(&fvals);
       }
@@ -358,10 +343,7 @@ impl SuPuzzle {
       let pmu = self.pmarksUnion(&cels);
       if pmu.len() == cels.len() {
         let toFix = self.connectedAllUnsolved(&cels);
-        match self.fixNakedPairsTrips(&cels, toFix, pmu.into_iter().collect()) {
-          true  => { return true; }
-          false => { continue; }
-        }
+        if self.fixNakedPairsTrips(&cels, toFix, pmu.into_iter().collect()) { return true; } else { continue; }
       }
     }
     false
@@ -475,11 +457,11 @@ impl SuPuzzle {
                 _ => { false }
               })
             };
-            if grp_elim.len() > 0 {
+            if !grp_elim.is_empty() {
               // Found pointing pair eliminations!
               print!("\nPointing Pair{}: Eliminating {} from {}.", 
                 self.cellsS(&grp_a), pmk, self.cellsS(&grp_elim));
-              for fcn in grp_elim.iter() {
+              for fcn in &grp_elim {
                 let fcel = self.cell_mut(*fcn);
                 fcel.elimVal(pmk);
               }
@@ -509,7 +491,7 @@ impl SuPuzzle {
           let pmx_a = self.pmarksAll(&grp_a);
           let pmx_b = self.pmarksAll(&grp_b);
           let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
-          if diff.len() > 0 {
+          if !diff.is_empty() {
             // Found box line reduction if remaining pmarks exist in a cell in the same block but not the current row/col
             let pmks: Vec<u8> = diff.clone().into_iter().collect();
             let bn = self.cell(grp_a[0]).block();
@@ -522,18 +504,17 @@ impl SuPuzzle {
               //println!("Block {}: {}", bn, self.cellsS(&tgrp_elim));
               keep(&tgrp_elim, |i| {
                 let isect: Vec<u8> = self.cell(i).pmarksSet().intersection(&diff).cloned().collect();
-                isect.len() > 0
+                !isect.is_empty()
               })
             };
-            if grp_elim.len() > 0 {
+            if !grp_elim.is_empty() {
               // Found box line reduction eliminations!
-              print!("\nBox Line Reduction{}: Eliminating {:?} from {}.", 
+              println!("\nBox Line Reduction{}: Eliminating {:?} from {}.", 
                 self.cellsS(&grp_a), &pmks, self.cellsS(&grp_elim));
-              for fcn in grp_elim.iter() {
+              for fcn in &grp_elim {
                 let fcel = self.cell_mut(*fcn);
                 fcel.elimVals(&pmks);
               }
-              print!("\n");
               return true;
             }
           }
@@ -542,5 +523,4 @@ impl SuPuzzle {
     }
     false
   }
-  
 }

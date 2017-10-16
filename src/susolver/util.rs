@@ -34,7 +34,7 @@ impl Permuter {
     self
   }
   fn next_length(&mut self) -> bool {
-    if self.ol_list.len() > 0 {
+    if !self.ol_list.is_empty() {
       self.output_length = self.ol_list.pop_front().unwrap();
       self.permute_list = self.pl_copy.clone();
       self.current_elem = None;
@@ -125,21 +125,21 @@ pub fn plistSetToVec(se: &HashSet<u8>) -> Vec<u8> {
   out
 }
 
-pub fn keep<F>(vals: &Vec<u8>, f: F) -> Vec<u8> 
+pub fn keep<F>(vals: &[u8], f: F) -> Vec<u8> 
   where F: Fn(u8) -> bool
 {
   let mut out: Vec<u8> = Vec::new();
-  for v in vals.into_iter() {
+  for v in vals {
     if f(*v) { out.push(*v) }
   }
   out
 }
 
-pub fn all_true<F>(vals: &Vec<u8>, f: F) -> bool 
+pub fn all_true<F>(vals: &[u8], f: F) -> bool 
   where F: Fn(u8) -> bool
 {
   let mut out = true;
-  for v in vals.into_iter() {
+  for v in vals {
     out = out && f(*v);
   }
   out
