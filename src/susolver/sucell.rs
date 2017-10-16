@@ -49,6 +49,10 @@ impl SuCell {
     }
   }
   
+  pub fn brc(&self) -> (u8, u8, u8) {
+    (self.block(), self.row(), self.col())
+  }
+  
   pub fn locS(&self) -> String {
     format!("{}{}", self.rowS(), self.colS())
   }
