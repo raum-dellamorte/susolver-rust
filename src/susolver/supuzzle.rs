@@ -6,7 +6,7 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::collections::HashSet;
 
-use susolver::util::{c, keep, plistRemainder, plistSetToVec};
+use susolver::util::{all_true, c, keep, Permuter, plistRemainder, plistSetToVec};
 use susolver::sucell::SuCell;
 
 //#[derive(Clone)]
@@ -46,20 +46,6 @@ impl SuPuzzle {
   }
   pub fn cell(&self, n: u8) -> &SuCell { &(self.cells[c(n)]) }
   pub fn cell_mut(&mut self, n: u8) -> &mut SuCell { &mut (self.cells[c(n)]) }
-  fn sumExcept(&self, cels: &Vec<u8>, except: &HashSet<u8>) -> HashSet<u8> {
-    let mut out: HashSet<u8> = HashSet::new();
-    for celn in (*cels).iter() {
-      if except.contains(celn) { continue; }
-      let cel = *(self.cell(*celn));
-      let pmx = cel.pmarksSet();
-      if cel.solved() {
-        out.insert(cel.val);
-      } else {
-        for x in pmx { out.insert(x); }
-      }
-    }
-    out
-  }
   pub fn cellsS(&self, cels: &Vec<u8>) -> String {
     let mut out = String::new() + "<";
     let mut sep = false;
@@ -138,6 +124,20 @@ impl SuPuzzle {
     }
     out
   }
+  fn sumExcept(&self, cels: &Vec<u8>, except: &HashSet<u8>) -> HashSet<u8> {
+    let mut out: HashSet<u8> = HashSet::new();
+    for celn in (*cels).iter() {
+      if except.contains(celn) { continue; }
+      let cel = *(self.cell(*celn));
+      let pmx = cel.pmarksSet();
+      if cel.solved() {
+        out.insert(cel.val);
+      } else {
+        for x in pmx { out.insert(x); }
+      }
+    }
+    out
+  }
   pub fn block(&self, n: u8) -> Vec<u8> {
     let mut out = Vec::new();
     for i in (1_u8)..(82_u8) {
@@ -190,85 +190,70 @@ impl SuPuzzle {
     }
     out
   }
+  fn pmarks2(&self) -> Vec<u8> {
+    keep(&((1..82_u8).into_iter().collect()), |i| self.cell(i).pmarksSet().len() == 2 )
+  }
   fn pmarks2or3(&self) -> Vec<u8> {
-    let mut out: Vec<u8> = Vec::new();
-    for cel in self.cells.iter() {
-      let ln = cel.pmarksSet().len();
-      if (ln > 1) && (ln < 4) {
-        out.push(cel.pos);
-      }
+    keep(&((1..82_u8).into_iter().collect()), |i| {
+      let ln = self.cell(i).pmarksSet().len();
+      (ln > 1) && (ln < 4)
+    })
+  }
+  fn pmarksUnion(&self, cels: &Vec<u8>) -> HashSet<u8> {
+    let mut out = HashSet::new();
+    for cel in cels {
+      let tmp = self.cell(*cel).pmarksSet();
+      out = out.union(&tmp).cloned().collect::<HashSet<u8>>();
     }
     out
+  }
+  fn inSameGroup(&self, cels: &Vec<u8>) -> bool {
+    let mut btest: HashSet<u8> = HashSet::new();
+    let mut rtest: HashSet<u8> = HashSet::new();
+    let mut ctest: HashSet<u8> = HashSet::new();
+    for cel in cels {
+      let (b, r, c) = self.cell(*cel).brc();
+      btest.insert(b);
+      rtest.insert(r);
+      ctest.insert(c);
+    }
+    btest.len() == 1 || rtest.len() == 1 || ctest.len() == 1
   }
   fn canSeeAll(&self, tcel: u8, cels: &Vec<u8>) -> bool {
-    let mut out = true;
-    for tcp in (*cels).iter() {
-      out = out && self.cell(*tcp).canSee(self.cell(tcel));
-    }
-    out
+    all_true(cels, |i| self.cell(i).canSee(self.cell(tcel)) )
   }
   fn connectedAll(&self, cels: &Vec<u8>) -> Vec<u8> {
-    let mut out: Vec<u8> = Vec::new();
-    for tcel in self.cells.iter() {
-      if self.canSeeAll(tcel.pos, cels) {
-        out.push(tcel.pos);
-      }
-    }
-    out
+    keep(&((1..82_u8).into_iter().collect()), |i| self.canSeeAll(i, cels) )
   }
   fn connectedAllUnsolved(&self, cels: &Vec<u8>) -> Vec<u8> {
-    let mut out: Vec<u8> = Vec::new();
-    for tcel in self.cells.iter() {
-      if !tcel.solved() && self.canSeeAll(tcel.pos, cels) {
-        out.push(tcel.pos);
-      }
-    }
-    out
+    keep(&((1..82_u8).into_iter().collect()), |i| {
+      let tcel = self.cell(i);
+      !tcel.solved() && self.canSeeAll(tcel.pos, cels)
+    })
   }
   fn connectedCells(&self, cel: &SuCell) -> Vec<u8> {
-    let mut out: Vec<u8> = Vec::new();
-    for tcel in self.cells.iter() {
-      if cel.canSee(tcel) {
-        out.push(tcel.pos);
-      }
-    }
-    out
+    keep(&((1..82_u8).into_iter().collect()), |i| {
+      let tcel = self.cell(i);
+      cel.canSee(tcel)
+    })
   }
   fn connectedSolved(&self, cel: &SuCell) -> Vec<u8> {
-    let mut out: Vec<u8> = Vec::new();
-    for tcel in self.cells.iter() {
-      if tcel.solved() && cel.canSee(tcel) {
-        out.push(tcel.pos);
-      }
-    }
-    out
+    keep(&((1..82_u8).into_iter().collect()), |i| {
+      let tcel = self.cell(i);
+      tcel.solved() && cel.canSee(tcel)
+    })
   }
   fn connectedUnsolved(&self, cel: &SuCell) -> Vec<u8> {
-    let mut out: Vec<u8> = Vec::new();
-    for tcel in self.cells.iter() {
-      if !tcel.solved() && cel.canSee(tcel) {
-        out.push(tcel.pos);
-      }
-    }
-    out
+    keep(&((1..82_u8).into_iter().collect()), |i| {
+      let tcel = self.cell(i);
+      !tcel.solved() && cel.canSee(tcel)
+    })
   }
   fn solvedCells(&self) -> Vec<u8> {
-    let mut out: Vec<u8> = Vec::new();
-    for cel in self.cells.iter() {
-      if cel.solved() {
-        out.push(cel.pos);
-      }
-    }
-    out
+    keep(&((1..82_u8).into_iter().collect()), |i| self.cell(i).solved() )
   }
   fn unsolvedCells(&self) -> Vec<u8> {
-    let mut out: Vec<u8> = Vec::new();
-    for cel in self.cells.iter() {
-      if !cel.solved() {
-        out.push(cel.pos);
-      }
-    }
-    out
+    keep(&((1..82_u8).into_iter().collect()), |i| !self.cell(i).solved() )
   }
   pub fn solve(&mut self) {
     loop {
@@ -348,76 +333,38 @@ impl SuPuzzle {
     }
     out
   }
+  fn fixNakedPairsTrips(&mut self, cels: &Vec<u8>, mut toFix: Vec<u8>, fvals: Vec<u8>) -> bool {
+    toFix.retain(|x| self.cell(*x).canBeAny(&fvals) ); // If there's nothing to fix, don't fix it.
+    if toFix.len() > 0 {
+      // Found Naked Pair or Trip!
+      let pairtrip = match cels.len() {
+        2 => { "Naked Pair" }
+        3 => { "Naked Triplet" }
+        _ => { return false }
+      };
+      println!("\n{}{}: Eliminating {:?} from {}", pairtrip, self.cellsS(&cels), fvals, self.cellsS(&toFix));
+      for fcp in toFix.iter() {
+        let fcel = self.cell_mut(*fcp);
+        fcel.elimVals(&fvals);
+      }
+      return true;
+    }
+    false
+  }
   pub fn nakedPairsTrips(&mut self) -> bool {
-    let mut out = false;
-    let mut startAt = 0;
     let test = self.pmarks2or3();
-    'outer: loop {
-      if (test.len() < 2) || (startAt >= test.len()) { break 'outer; }
-      for tc1p in (startAt)..(test.len()) {
-        let tc1: u8 = test[tc1p];
-        let pm1: HashSet<u8> = self.cell(tc1).pmarksSet();
-        for tc2p in (tc1p + 1)..(test.len()) {
-          let tc2: u8 = test[tc2p];
-          if !(self.cell(tc1).canSee(&(self.cell(tc2)))) { continue; }
-          let pm2: HashSet<u8> = self.cell(tc2).pmarksSet();
-          let pmi: HashSet<u8> = pm1.intersection(&pm2).cloned().collect();
-          if pmi.len() == 0 { continue; }
-          let pmu: HashSet<u8> = pm1.union(&pm2).cloned().collect();
-          if pmu.len() == 2 {
-            // Found Naked Pair!
-            //println!("Naked Pair Candidate: {} {}", self.cell(tc1).locS(), self.cell(tc2).locS());
-            let mut toFix = self.connectedAllUnsolved(&vec!(tc1, tc2));
-            let fvals: Vec<u8> = pmu.clone().into_iter().collect();
-            toFix.retain(|x| self.cell(*x).canBeAny(&fvals) ); // If there's nothing to fix, don't fix it.
-            if toFix.len() > 0 {
-              for fcp in toFix.iter() {
-                let tmpStr = format!("{}, {}", self.cell(tc1).locS(), self.cell(tc2).locS());
-                let fcel = self.cell_mut(*fcp);
-                print!("\nNaked Pair<{}>: Eliminating [{}, {}] from {}", 
-                  tmpStr, fvals[0], fvals[1], fcel.locS());
-                fcel.elimVals(&fvals);
-              }
-              print!("\n");
-              out = true;
-              break 'outer;
-            }
-          }
-          if (tc2p + 1) >= test.len() { break 'outer; }
-          // At this point we're looking for a Naked Triple
-          for tc3p in (tc2p + 1)..(test.len()) {
-            let tc3: u8 = test[tc3p];
-            if !self.canSeeAll(tc3, &(vec!(tc1, tc2))) { continue; }
-            let pm3: HashSet<u8> = self.cell(tc3).pmarksSet();
-            let pmi3: HashSet<u8> = pmu.intersection(&pm3).cloned().collect();
-            if pmi3.len() < 2 { continue; }
-            let pmu3: HashSet<u8> = pmu.union(&pm3).cloned().collect();
-            if pmu3.len() == 3 {
-              // Found Naked Triplet!
-              //println!("Naked Triplet Candidate: {} {} {}", self.cell(tc1).locS(), self.cell(tc2).locS(), self.cell(tc3).locS());
-              let mut toFix: Vec<u8> = self.connectedAllUnsolved(&vec!(tc1, tc2, tc3));
-              let fvals: Vec<u8> = pmu3.clone().into_iter().collect();
-              toFix.retain(|x| self.cell(*x).canBeAny(&fvals) ); // If there's nothing to fix, don't fix it.
-              if toFix.len() > 0 {
-                for fcp in toFix.iter() {
-                  let tmpStr = format!("{}, {}, {}", self.cell(tc1).locS(), self.cell(tc2).locS(), self.cell(tc3).locS());
-                  let fcel = self.cell_mut(*fcp);
-                  print!("\nNaked Triplet<{}>: Eliminating [{}, {}, {}] from {}", 
-                    tmpStr, fvals[0], fvals[1], fvals[2], fcel.locS());
-                  fcel.elimVals(&fvals);
-                }
-                print!("\n");
-                out = true;
-                break 'outer;
-              }
-            }
-          }
+    for cels in Permuter::new(2, test.clone()).add_length(3) {
+      if !self.inSameGroup(&cels) { continue; }
+      let pmu = self.pmarksUnion(&cels);
+      if pmu.len() == cels.len() {
+        let toFix = self.connectedAllUnsolved(&cels);
+        match self.fixNakedPairsTrips(&cels, toFix, pmu.into_iter().collect()) {
+          true  => { return true; }
+          false => { continue; }
         }
       }
-      startAt += 1;
-      if startAt >= test.len() { break 'outer; }
     }
-    out
+    false
   }
   fn hpCands(&self, c1p: u8, c2p: u8) -> bool {
     let c1 = self.cell(c1p);
@@ -431,187 +378,169 @@ impl SuPuzzle {
     ((c1.pmarksSet()).union(&(c2.pmarksSet())).cloned().collect::<HashSet<u8>>().union(&(c3.pmarksSet())).cloned().collect::<HashSet<u8>>()).len() > 3
   }
   pub fn hiddenPairsTrips(&mut self) -> bool {
-    let mut out = false;
-    'outer: loop {
-      for brc in 0..3 {
-        for brcn in (1_u8)..(10_u8) {
-          let tgrp: Vec<u8> = match brc {
-            0 => self.block(brcn),
-            1 => self.row(brcn),
-            _ => self.col(brcn),
-          };
-          for c1 in 0..8 {
-            let cel1p = tgrp[c1];
-            if self.cell(cel1p).solved() { continue; }
-            for c2 in (c1 + 1)..9 {
-              let cel2p = tgrp[c2];
-              if self.cell(cel2p).solved() || !(self.hpCands(cel1p, cel2p)) { continue; }
-              {
-                let mut testPair: HashSet<u8> = HashSet::new();
-                testPair.insert(cel1p);
-                testPair.insert(cel2p);
-                let se = self.sumExcept(&tgrp, &testPair);
-                if se.len() == 7 {
-                  // Hidden Pair Found!
-                  let pair = plistRemainder(&se);
-                  println!("\nHidden Pair<{}, {}>[{}, {}]: Eliminating other values.", 
-                    self.cell(cel1p).locS(), self.cell(cel2p).locS(), pair[0], pair[1]);
-                  let fvals = plistSetToVec(&se);
-                  self.cell_mut(cel1p).elimVals(&fvals);
-                  self.cell_mut(cel2p).elimVals(&fvals);
-                  out = true;
-                  break 'outer;
-                }
+    for brc in 0..3 {
+      for brcn in (1_u8)..(10_u8) {
+        let tgrp: Vec<u8> = match brc {
+          0 => self.block(brcn),
+          1 => self.row(brcn),
+          _ => self.col(brcn),
+        };
+        for c1 in 0..8 {
+          let cel1p = tgrp[c1];
+          if self.cell(cel1p).solved() { continue; }
+          for c2 in (c1 + 1)..9 {
+            let cel2p = tgrp[c2];
+            if self.cell(cel2p).solved() || !(self.hpCands(cel1p, cel2p)) { continue; }
+            {
+              let mut testPair: HashSet<u8> = HashSet::new();
+              testPair.insert(cel1p);
+              testPair.insert(cel2p);
+              let se = self.sumExcept(&tgrp, &testPair);
+              if se.len() == 7 {
+                // Hidden Pair Found!
+                let pair = plistRemainder(&se);
+                println!("\nHidden Pair<{}, {}>[{}, {}]: Eliminating other values.", 
+                  self.cell(cel1p).locS(), self.cell(cel2p).locS(), pair[0], pair[1]);
+                let fvals = plistSetToVec(&se);
+                self.cell_mut(cel1p).elimVals(&fvals);
+                self.cell_mut(cel2p).elimVals(&fvals);
+                return true;
               }
-              if c1 < 1 { continue; }
-              for c3 in 0..(c1 + 1) {
-                let cel3p = tgrp[c3];
-                if self.cell(cel3p).solved() || !(self.htCands(cel1p, cel2p, cel3p)) { continue; }
-                let mut testTrip: HashSet<u8> = HashSet::new();
-                testTrip.insert(cel1p);
-                testTrip.insert(cel2p);
-                testTrip.insert(cel3p);
-                let se = self.sumExcept(&tgrp, &testTrip);
-                if se.len() == 6 {
-                  // Hidden Triplet Found!
-                  let trip = plistRemainder(&se);
-                  println!("\nHidden Triplet<{}, {}, {}>[{}, {}, {}]: Eliminating other values.", 
-                    self.cell(cel3p).locS(), self.cell(cel1p).locS(), self.cell(cel2p).locS(), 
-                    trip[0], trip[1], trip[2]);
-                  let fvals = plistSetToVec(&se);
-                  self.cell_mut(cel1p).elimVals(&fvals);
-                  self.cell_mut(cel2p).elimVals(&fvals);
-                  self.cell_mut(cel3p).elimVals(&fvals);
-                  out = true;
-                  break 'outer;
-                }
+            }
+            if c1 < 1 { continue; }
+            for c3 in 0..(c1 + 1) {
+              let cel3p = tgrp[c3];
+              if self.cell(cel3p).solved() || !(self.htCands(cel1p, cel2p, cel3p)) { continue; }
+              let mut testTrip: HashSet<u8> = HashSet::new();
+              testTrip.insert(cel1p);
+              testTrip.insert(cel2p);
+              testTrip.insert(cel3p);
+              let se = self.sumExcept(&tgrp, &testTrip);
+              if se.len() == 6 {
+                // Hidden Triplet Found!
+                let trip = plistRemainder(&se);
+                println!("\nHidden Triplet<{}, {}, {}>[{}, {}, {}]: Eliminating other values.", 
+                  self.cell(cel3p).locS(), self.cell(cel1p).locS(), self.cell(cel2p).locS(), 
+                  trip[0], trip[1], trip[2]);
+                let fvals = plistSetToVec(&se);
+                self.cell_mut(cel1p).elimVals(&fvals);
+                self.cell_mut(cel2p).elimVals(&fvals);
+                self.cell_mut(cel3p).elimVals(&fvals);
+                return true;
               }
             }
           }
         }
       }
-      // We've found nothing if we got this far.
-      break 'outer;
     }
-    out
+    false
   }
   pub fn pointingPairs(&mut self) -> bool {
-    let mut out = false;
-    'outer: loop {
-      for bn in (1_u8)..(10_u8) {
-        let b = self.block(bn);
-        for rc in 0..2 {
-          for rcn in (1_u8)..(4_u8) {
-            let (grp_a, grp_b) = match rc {
-              0 => { (keep(&b, |i| self.cell(i).brow() == rcn ), keep(&b, |i| self.cell(i).brow() != rcn )) }
-              _ => { (keep(&b, |i| self.cell(i).bcol() == rcn ), keep(&b, |i| self.cell(i).bcol() != rcn )) }
-            };
-            let pmx_a = self.pmarksAll(&grp_a);
-            let pmx_b = self.pmarksAll(&grp_b);
-            let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
-            if diff.len() == 1 {
-              // Found pointing pair if remaining pmark exists in a cell in the same row or col but outside the current block
-              let pmk: Vec<u8> = diff.into_iter().collect();
-              let pmk: u8 = pmk[0];
-              let grp_a = keep(&grp_a, |i| self.cell(i).canBe(pmk) );
-              let grp_elim = {
-                let cels: Vec<u8> = (1_u8..82_u8).into_iter().collect();
-                let tgrp_elim = match rc {
-                  0 => {
-                    let rn = self.cell(grp_a[0]).row();
-                    keep(&cels, |i| match self.cell(i) {
-                      tcel if (tcel.block() != bn) && (tcel.row() == rn) => { true }
-                      _ => { false }
-                    })
-                  }
-                  _ => {
-                    let cn = self.cell(grp_a[0]).col();
-                    keep(&cels, |i| match self.cell(i) {
-                      tcel if (tcel.block() != bn) && (tcel.col() == cn) => { true }
-                      _ => { false }
-                    })
-                  }
-                };
-                keep(&tgrp_elim, |i| match self.cell(i) {
-                  tcel if tcel.pmarksSet().contains(&pmk) => { true }
-                  _ => { false }
-                })
-              };
-              if grp_elim.len() > 0 {
-                // Found pointing pair eliminations!
-                print!("\nPointing Pair{}: Eliminating {} from {}.", 
-                  self.cellsS(&grp_a), pmk, self.cellsS(&grp_elim));
-                for fcn in grp_elim.iter() {
-                  let fcel = self.cell_mut(*fcn);
-                  fcel.elimVal(pmk);
+    for bn in (1_u8)..(10_u8) {
+      let b = self.block(bn);
+      for rc in 0..2 {
+        for rcn in (1_u8)..(4_u8) {
+          let (grp_a, grp_b) = match rc {
+            0 => { (keep(&b, |i| self.cell(i).brow() == rcn ), keep(&b, |i| self.cell(i).brow() != rcn )) }
+            _ => { (keep(&b, |i| self.cell(i).bcol() == rcn ), keep(&b, |i| self.cell(i).bcol() != rcn )) }
+          };
+          let pmx_a = self.pmarksAll(&grp_a);
+          let pmx_b = self.pmarksAll(&grp_b);
+          let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
+          if diff.len() == 1 {
+            // Found pointing pair if remaining pmark exists in a cell in the same row or col but outside the current block
+            let pmk: Vec<u8> = diff.into_iter().collect();
+            let pmk: u8 = pmk[0];
+            let grp_a = keep(&grp_a, |i| self.cell(i).canBe(pmk) );
+            let grp_elim = {
+              let cels: Vec<u8> = (1_u8..82_u8).into_iter().collect();
+              let tgrp_elim = match rc {
+                0 => {
+                  let rn = self.cell(grp_a[0]).row();
+                  keep(&cels, |i| match self.cell(i) {
+                    tcel if (tcel.block() != bn) && (tcel.row() == rn) => { true }
+                    _ => { false }
+                  })
                 }
-                print!("\n");
-                out = true;
-                break 'outer;
+                _ => {
+                  let cn = self.cell(grp_a[0]).col();
+                  keep(&cels, |i| match self.cell(i) {
+                    tcel if (tcel.block() != bn) && (tcel.col() == cn) => { true }
+                    _ => { false }
+                  })
+                }
+              };
+              keep(&tgrp_elim, |i| match self.cell(i) {
+                tcel if tcel.pmarksSet().contains(&pmk) => { true }
+                _ => { false }
+              })
+            };
+            if grp_elim.len() > 0 {
+              // Found pointing pair eliminations!
+              print!("\nPointing Pair{}: Eliminating {} from {}.", 
+                self.cellsS(&grp_a), pmk, self.cellsS(&grp_elim));
+              for fcn in grp_elim.iter() {
+                let fcel = self.cell_mut(*fcn);
+                fcel.elimVal(pmk);
               }
+              print!("\n");
+              return true;
             }
           }
         }
       }
-      // We've found nothing if we got this far.
-      break 'outer;
     }
-    out
+    false
   }
   pub fn boxLineReduction(&mut self) -> bool {
-    let mut out = false;
-    'outer: loop {
-      for rcn in (1_u8)..(10_u8) {
-        for rc in 0..2 {
-          let trc = match rc {
-            0 => { self.row(rcn) }
-            _ => { self.col(rcn) }
+    for rcn in (1_u8)..(10_u8) {
+      for rc in 0..2 {
+        let trc = match rc {
+          0 => { self.row(rcn) }
+          _ => { self.col(rcn) }
+        };
+        for grp_n in (1_u8)..(4_u8) {
+          let cr = match rc {
+            0 => { 1 }
+            _ => { 0 }
           };
-          for grp_n in (1_u8)..(4_u8) {
-            let cr = match rc {
-              0 => { 1 }
-              _ => { 0 }
-            };
-            let grp_a = keep(&trc, |i| self.cell(i).block3(cr) == grp_n ); 
-            let grp_b = keep(&trc, |i| self.cell(i).block3(cr) != grp_n );
-            let pmx_a = self.pmarksAll(&grp_a);
-            let pmx_b = self.pmarksAll(&grp_b);
-            let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
-            if diff.len() > 0 {
-              // Found box line reduction if remaining pmarks exist in a cell in the same block but not the current row/col
-              let pmks: Vec<u8> = diff.clone().into_iter().collect();
-              let bn = self.cell(grp_a[0]).block();
-              let grp_elim = {
-                let b = self.block(bn);
-                let tgrp_elim = match rc {
-                  0 => { let t = self.cell(grp_a[0]).brow(); keep(&b, |i| self.cell(i).brow() != t ) }
-                  _ => { let t = self.cell(grp_a[0]).bcol(); keep(&b, |i| self.cell(i).bcol() != t ) }
-                };
-                //println!("Block {}: {}", bn, self.cellsS(&tgrp_elim));
-                keep(&tgrp_elim, |i| {
-                  let isect: Vec<u8> = self.cell(i).pmarksSet().intersection(&diff).cloned().collect();
-                  isect.len() > 0
-                })
+          let grp_a = keep(&trc, |i| self.cell(i).block3(cr) == grp_n ); 
+          let grp_b = keep(&trc, |i| self.cell(i).block3(cr) != grp_n );
+          let pmx_a = self.pmarksAll(&grp_a);
+          let pmx_b = self.pmarksAll(&grp_b);
+          let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
+          if diff.len() > 0 {
+            // Found box line reduction if remaining pmarks exist in a cell in the same block but not the current row/col
+            let pmks: Vec<u8> = diff.clone().into_iter().collect();
+            let bn = self.cell(grp_a[0]).block();
+            let grp_elim = {
+              let b = self.block(bn);
+              let tgrp_elim = match rc {
+                0 => { let t = self.cell(grp_a[0]).brow(); keep(&b, |i| self.cell(i).brow() != t ) }
+                _ => { let t = self.cell(grp_a[0]).bcol(); keep(&b, |i| self.cell(i).bcol() != t ) }
               };
-              if grp_elim.len() > 0 {
-                // Found box line reduction eliminations!
-                print!("\nBox Line Reduction{}: Eliminating {:?} from {}.", 
-                  self.cellsS(&grp_a), &pmks, self.cellsS(&grp_elim));
-                for fcn in grp_elim.iter() {
-                  let fcel = self.cell_mut(*fcn);
-                  fcel.elimVals(&pmks);
-                }
-                print!("\n");
-                out = true;
-                break 'outer;
+              //println!("Block {}: {}", bn, self.cellsS(&tgrp_elim));
+              keep(&tgrp_elim, |i| {
+                let isect: Vec<u8> = self.cell(i).pmarksSet().intersection(&diff).cloned().collect();
+                isect.len() > 0
+              })
+            };
+            if grp_elim.len() > 0 {
+              // Found box line reduction eliminations!
+              print!("\nBox Line Reduction{}: Eliminating {:?} from {}.", 
+                self.cellsS(&grp_a), &pmks, self.cellsS(&grp_elim));
+              for fcn in grp_elim.iter() {
+                let fcel = self.cell_mut(*fcn);
+                fcel.elimVals(&pmks);
               }
+              print!("\n");
+              return true;
             }
           }
         }
       }
-      // We've found nothing if we got this far.
-      break 'outer;
     }
-    out
+    false
   }
+  
 }
