@@ -259,6 +259,8 @@ impl SuPuzzle {
       if self.pointingPairs() { continue; }
       print!(" | Running boxLineReduction");
       if self.boxLineReduction() { continue; }
+      print!(" | Running xwings");
+      if self.xwings() { continue; }
       print!(" | ");
       break
     }
@@ -518,6 +520,45 @@ impl SuPuzzle {
               return true;
             }
           }
+        }
+      }
+    }
+    false
+  }
+  pub fn xwings(&mut self) -> bool {
+    let test = self.unsolvedCells();
+    for cels in Permuter::new(4, test.clone()) {
+      if self.cell(cels[0]).row() != self.cell(cels[1]).row() ||
+         self.cell(cels[0]).col() != self.cell(cels[2]).col() ||
+         self.cell(cels[2]).row() != self.cell(cels[3]).row() ||
+         self.cell(cels[1]).col() != self.cell(cels[3]).col() || 
+         self.cell(cels[0]).block() == self.cell(cels[3]).block() { continue; }
+      let pmi = self.cell(cels[0]).pmarksSet()
+        .intersection(&self.cell(cels[1]).pmarksSet()).cloned().into_iter().collect::<HashSet<u8>>()
+        .intersection(&self.cell(cels[2]).pmarksSet()).cloned().into_iter().collect::<HashSet<u8>>()
+        .intersection(&self.cell(cels[3]).pmarksSet()).cloned().into_iter().collect::<HashSet<u8>>();
+      if pmi.is_empty() { continue; }
+      let row = keep(&[&self.row(self.cell(cels[0]).row())[..], &self.row(self.cell(cels[2]).row())[..]].concat(), 
+                      |tc| !self.cell(tc).solved() && !cels.clone().into_iter().collect::<HashSet<u8>>().contains(&tc) );
+      let col = keep(&[&self.col(self.cell(cels[0]).col())[..], &self.col(self.cell(cels[1]).col())[..]].concat(),
+                      |tc| !self.cell(tc).solved() && !cels.clone().into_iter().collect::<HashSet<u8>>().contains(&tc) );
+      for cand in pmi.clone() {
+        let grp_elim = if self.pmarksUnion(&row).contains(&cand) && !self.pmarksUnion(&col).contains(&cand) {
+          // X-Wing found with row eliminations
+          keep(&row, |tc| self.cell(tc).pmarksSet().contains(&cand) )
+        } else if !self.pmarksUnion(&row).contains(&cand) && self.pmarksUnion(&col).contains(&cand) {
+          // X-Wing found with col eliminations
+          keep(&col, |tc| self.cell(tc).pmarksSet().contains(&cand) )
+        } else {
+          Vec::new()
+        };
+        if !grp_elim.is_empty() {
+          println!("\nX-Wing{}: Eliminating {} from {}", self.cellsS(&cels), cand, self.cellsS(&grp_elim));
+          for fcn in &grp_elim {
+            let fcel = self.cell_mut(*fcn);
+            fcel.elimVal(cand);
+          }
+          return true;
         }
       }
     }
