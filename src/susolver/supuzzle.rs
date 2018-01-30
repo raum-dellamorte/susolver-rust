@@ -261,6 +261,8 @@ impl SuPuzzle {
       if self.boxLineReduction() { continue; }
       print!(" | Running xwings");
       if self.xwings() { continue; }
+      print!(" | Running ywings");
+      if self.ywings() { continue; }
       print!(" | ");
       break
     }
@@ -557,6 +559,49 @@ impl SuPuzzle {
           for fcn in &grp_elim {
             let fcel = self.cell_mut(*fcn);
             fcel.elimVal(cand);
+          }
+          return true;
+        }
+      }
+    }
+    false
+  }
+  
+  pub fn ywings(&mut self) -> bool {
+    let test = self.unsolvedCells();
+    for tcn in test.clone() {
+      let tcel = self.cell(tcn).clone();
+      if tcel.pmarksSet().len() != 2 { continue; }
+      for cels in Permuter::new(2, test.clone()) {
+        if (tcn == cels[0]) | (tcn == cels[1]) { continue; }
+        let acel = self.cell(cels[0]).clone();
+        let bcel = self.cell(cels[1]).clone();
+        if !(tcel.canSee(&acel) & tcel.canSee(&bcel)) { continue; }
+        if acel.canSee(&bcel) { continue; }
+        let pma = acel.pmarksSet();
+        if pma.len() != 2 { continue; }
+        let pmb = bcel.pmarksSet();
+        if pmb.len() != 2 { continue; }
+        let pmiab = acel.pmarksSet().intersection(&bcel.pmarksSet())
+                      .cloned().into_iter().collect::<Vec<u8>>();
+        if pmiab.len() != 1 { continue; }
+        let c = pmiab[0];
+        if tcel.pmarksSet().contains(&c) { continue; }
+        if tcel.pmarksSet().intersection(&acel.pmarksSet())
+                .cloned().into_iter().collect::<Vec<u8>>()
+                .len() != 1 { continue; }
+        if tcel.pmarksSet().intersection(&bcel.pmarksSet())
+                .cloned().into_iter().collect::<Vec<u8>>()
+                .len() != 1 { continue; }
+        let grp_elim = keep(&test, |ec| 
+          self.canSeeAll(ec, &cels) & self.cell(ec).pmarksSet().contains(&c));
+        if !grp_elim.is_empty() {
+          // Found Y-Wing elimination!
+          println!("\nY-Wing<{}{}>: Eliminating {} from {}", 
+                    tcel.locS(), self.cellsS(&cels), c, self.cellsS(&grp_elim));
+          for fcn in &grp_elim {
+            let fcel = self.cell_mut(*fcn);
+            fcel.elimVal(c);
           }
           return true;
         }
