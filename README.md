@@ -21,12 +21,17 @@ Working Strategies:
 - Pointing Pairs
 - Box Line Reduction
 - X-Wings
-- *NEW* Y-Wings
+- Y-Wings
+- *NEW* Singles Chains / Simple Colouring
 
 Next:
-- Simple Colouring
+- Swordfish (probably)
 
-Simple Colouring was tough the last time I implemented it.  The word Simple is misleading as far as algorithms are concerned.  You trace a chain of connected cells to prove that a value can't be in one of those cells.  Nevertheless, the rust version solves nearly instantaneously while there was a noticable lag in all my previous versions in other languages, which I believe the JVM versions (Mirah and Kotlin) were the fastest.
+Simple Colouring was tough the last time I implemented it, but I was fighting with the language I used, Mirah.  It had very little in the way of debugging tools.  Mirah was to take advantage of the JVM without having to write Java or lose Java's speed, but I now prefer to use Kotlin for the JVM, which is just as fast as far as I can tell with the bonus of being safer.  Nevertheless, the rust version solves nearly instantaneously and so far the only safety issue I have to think about is making sure I don't go out of bounds with an array of some kind.  That's the only runtime error I remember having.
+
+Back on Simple Colouring, the word 'simple' is misleading as far as algorithms are concerned.  You trace a chain of cells connected by a single value wherein each link is made by that value being a possibility in only 2 cells per Block/Row/Column.  You assign one of two colours to each cell, alternating as you follow the chain.  If you end up with 2 cells that are in the same Block, Row, or Column, and they are the same colour, all of that colour can be eliminated.  If you have cells not in the chain that can be that value and can see two loose ends of the chain of opposite colour, that value can be eliminated from those off chain cells.
+
+It took me a while to get started while I tried to work out just how I would tackle the problem within the safety constraints of Rust, but once I got into it, it went really fast.  VS Code with RLS (hopefully soon to be Atom with RLS) gives me code completion and every compiler error as I write so I never have to stop to do a test compile until what I want to test is my logic instead of my code.  I never had much of an IDE for Ruby.  Never had one for Haskell.  Never wanted to write Java, so I couldn't take advantage of all its IDE glory.  Mirah wasn't even 1.0.  This is the best IDE experience I've had yet.
 
 I love Rust :)
 
@@ -50,7 +55,7 @@ It is a picky picky compiler, but there's a warm feeling in the confidence that 
 Example Time!
 -------------
 
-This puzzle is an example to test the Y-Wings algorithm.  It finds the Y-Wing, but gives up when it runs into an example of Simple Colouring as there's no method for that yet.
+This puzzle is an example to test the Y-Wings algorithm.  ~~It finds the Y-Wing, but gives up when it runs into an example of Simple Colouring as there's no method for that yet.~~ It has Y-Wings and Singles Chains/Simple Colouring out the wazoo!  And it all gets solved!
 ```
 savedSudoku-X-Wing01.txt contains:
 0 9 3  0 0 4  5 6 0
@@ -89,9 +94,9 @@ Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Runn
 Pointing Pair<A4, B4>: Eliminating 7 from <G4>.
 Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings
 X-Wing<C1, C5, I1, I5>: Eliminating 5 from <B1, H1, B5, G5, H5>
-Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running ywings
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running simpleColouring | Running ywings
 Y-Wing<G4<A4, G9>>: Eliminating 7 from <A9>
-Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running ywings
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running simpleColouring | Running ywings
 Y-Wing<G4<G9, I6>>: Eliminating 7 from <I7>
 
 Cell I7 solved as 6
@@ -123,24 +128,77 @@ Running simpleElim | G2 drop 3
 Running hiddenSingle
 hiddenSingle 3 found for H2
 Cell H2 solved as 3
-Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running ywings | Finished
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running simpleColouring
+Simple Colouring by Chain Ends<A4, C2>: Eliminating 1 from <A1, C5>.
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips
+Naked Triplet<A1, B1, H1>: Eliminating [2, 7, 8] from <C1>
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running simpleColouring
+Simple Colouring by Colour Conflict: Eliminating 7 from <B9, C2, D8, G9, H1, H7>.
+
+Cell C2 solved as 1
+
+Cell D8 solved as 2
+
+Cell G9 solved as 5
+
+Cell H1 solved as 8
+
+Cell H7 solved as 2
+Running simpleElim | A1 drop 8 | B1 drop 8 | C1 drop 1
+Cell C1 solved as 5
+ | B3 drop 5
+Cell B3 solved as 8
+ | B9 drop 8
+Cell B9 solved as 2
+ | A9 drop 2
+Cell A9 solved as 8
+ | B1 drop 2
+Cell B1 solved as 7
+ | A1 drop 7
+Cell A1 solved as 2
+ | A5 drop 2
+Cell A5 solved as 1
+ | A4 drop 1
+Cell A4 solved as 7
+ | B4 drop 7
+Cell B4 solved as 5
+ | C5 drop 5
+Cell C5 solved as 2
+ | C8 drop 2
+Cell C8 solved as 7
+ | D7 drop 2
+Cell D7 solved as 7
+ | G2 drop 1
+Cell G2 solved as 7
+ | G4 drop 5
+Cell G4 solved as 1
+ | H3 drop 8
+Cell H3 solved as 5
+ | H9 drop 2 | H9 drop 5
+Cell H9 solved as 7
+ | I1 drop 5
+Cell I1 solved as 1
+ | I5 drop 1
+Cell I5 solved as 5
+
+Finished
 Puzzle :
-1 2 _   * - *   * - *     1 _ _   1 2 _   * - *     * - *   * - *   _ 2 _
-_ _ _   | 9 |   | 3 |     _ _ _   _ _ _   | 4 |     | 5 |   | 6 |   _ _ _
-7 8 _   * - *   * - *     7 _ _   _ _ _   * - *     * - *   * - *   _ 8 _
++ - +   * - *   * - *     + - +   + - +   * - *     * - *   * - *   + - +
+| 2 |   | 9 |   | 3 |     | 7 |   | 1 |   | 4 |     | 5 |   | 6 |   | 8 |
++ - +   * - *   * - *     + - +   + - +   * - *     * - *   * - *   + - +
 
-_ 2 _   * - *   _ _ _     _ _ _   + - +   * - *     * - *   * - *   _ 2 _
-_ _ _   | 6 |   _ 5 _     _ 5 _   | 9 |   | 3 |     | 1 |   | 4 |   _ _ _
-7 8 _   * - *   _ 8 _     7 _ _   + - +   * - *     * - *   * - *   7 8 _
++ - +   * - *   + - +     + - +   + - +   * - *     * - *   * - *   + - +
+| 7 |   | 6 |   | 8 |     | 5 |   | 9 |   | 3 |     | 1 |   | 4 |   | 2 |
++ - +   * - *   + - +     + - +   + - +   * - *     * - *   * - *   + - +
 
-1 2 _   1 _ _   * - *     * - *   1 2 _   * - *     * - *   _ 2 _   * - *
-_ 5 _   _ _ _   | 4 |     | 6 |   _ 5 _   | 8 |     | 3 |   _ _ _   | 9 |
-7 _ _   7 _ _   * - *     * - *   _ _ _   * - *     * - *   7 _ _   * - *
++ - +   + - +   * - *     * - *   + - +   * - *     * - *   + - +   * - *
+| 5 |   | 1 |   | 4 |     | 6 |   | 2 |   | 8 |     | 3 |   | 7 |   | 9 |
++ - +   + - +   * - *     * - *   + - +   * - *     * - *   + - +   * - *
 
 
-* - *   * - *   * - *     * - *   * - *   * - *     _ 2 _   _ 2 _   + - +
-| 9 |   | 8 |   | 1 |     | 3 |   | 4 |   | 5 |     _ _ _   _ _ _   | 6 |
-* - *   * - *   * - *     * - *   * - *   * - *     7 _ _   7 _ _   + - +
+* - *   * - *   * - *     * - *   * - *   * - *     + - +   + - +   + - +
+| 9 |   | 8 |   | 1 |     | 3 |   | 4 |   | 5 |     | 7 |   | 2 |   | 6 |
+* - *   * - *   * - *     * - *   * - *   * - *     + - +   + - +   + - +
 
 * - *   * - *   * - *     * - *   * - *   * - *     * - *   * - *   * - *
 | 3 |   | 4 |   | 7 |     | 2 |   | 8 |   | 6 |     | 9 |   | 5 |   | 1 |
@@ -151,16 +209,16 @@ _ 5 _   _ _ _   | 4 |     | 6 |   _ 5 _   | 8 |     | 3 |   _ _ _   | 9 |
 * - *   * - *   * - *     + - +   * - *   + - +     * - *   * - *   * - *
 
 
-* - *   1 _ _   * - *     1 _ _   + - +   * - *     * - *   * - *   _ _ _
-| 4 |   _ _ _   | 6 |     _ 5 _   | 3 |   | 2 |     | 8 |   | 9 |   _ 5 _
-* - *   7 _ _   * - *     _ _ _   + - +   * - *     * - *   * - *   7 _ _
+* - *   + - +   * - *     + - +   + - +   * - *     * - *   * - *   + - +
+| 4 |   | 7 |   | 6 |     | 1 |   | 3 |   | 2 |     | 8 |   | 9 |   | 5 |
+* - *   + - +   * - *     + - +   + - +   * - *     * - *   * - *   + - +
 
-_ _ _   + - +   _ _ _     * - *   + - +   + - +     _ 2 _   * - *   _ 2 _
-_ _ _   | 3 |   _ 5 _     | 4 |   | 6 |   | 9 |     _ _ _   | 1 |   _ 5 _
-7 8 _   + - +   _ 8 _     * - *   + - +   + - +     7 _ _   * - *   7 _ _
++ - +   + - +   + - +     * - *   + - +   + - +     + - +   * - *   + - +
+| 8 |   | 3 |   | 5 |     | 4 |   | 6 |   | 9 |     | 2 |   | 1 |   | 7 |
++ - +   + - +   + - +     * - *   + - +   + - +     + - +   * - *   + - +
 
-1 _ _   * - *   * - *     * - *   1 _ _   + - +     + - +   * - *   * - *
-_ 5 _   | 2 |   | 9 |     | 8 |   _ 5 _   | 7 |     | 6 |   | 3 |   | 4 |
-_ _ _   * - *   * - *     * - *   _ _ _   + - +     + - +   * - *   * - *
++ - +   * - *   * - *     * - *   + - +   + - +     + - +   * - *   * - *
+| 1 |   | 2 |   | 9 |     | 8 |   | 5 |   | 7 |     | 6 |   | 3 |   | 4 |
++ - +   * - *   * - *     * - *   + - +   + - +     + - +   * - *   * - *
 ```
 

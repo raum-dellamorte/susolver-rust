@@ -6,10 +6,13 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::collections::HashSet;
 
-use susolver::util::{all_true, c, keep, Permuter, plistRemainder, plistSetToVec};
+use susolver::util::{all_true, c, keep, Permuter, plistRemainder, plistSetToVec, vecrange};
 use susolver::sucell::SuCell;
+use susolver::chains::Chain; //, ChainLink};
+use susolver::BRC;
+use susolver::BRC::*;
 
-//#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct SuPuzzle {
   pub cells: Vec<SuCell>,
 }
@@ -208,6 +211,13 @@ impl SuPuzzle {
     }
     btest.len() == 1 || rtest.len() == 1 || ctest.len() == 1
   }
+  fn sameGroupContains(&self, cel: u8, val: u8, grp: &BRC) -> Vec<u8> {
+    let acel = self.cell(cel);
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
+      let bcel = self.cell(i);
+      i != cel && !bcel.solved() && bcel.pmarksSet().contains(&val) && acel.sameGroup(bcel, grp)
+    })
+  }
   fn canSeeAll(&self, tcel: u8, cels: &[u8]) -> bool {
     all_true(cels, |i| self.cell(i).canSee(self.cell(tcel)) )
   }
@@ -241,8 +251,34 @@ impl SuPuzzle {
   fn solvedCells(&self) -> Vec<u8> {
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| self.cell(i).solved() )
   }
-  fn unsolvedCells(&self) -> Vec<u8> {
+  pub fn unsolvedCells(&self) -> Vec<u8> {
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| !self.cell(i).solved() )
+  }
+  fn binaryCand(&self, cel: u8, val: u8, grp: &BRC) -> Option<u8> {
+    match &self.sameGroupContains(cel, val, grp) {
+      x if x.len() == 1 => { Some(x[0]) }
+      _ => { None }
+    }
+  }
+  pub fn binaryCandsAnyGroup(&self, cel: u8, val: u8) -> Option<Vec<Option<u8>>> {
+    if !self.cell(cel).pmarksSet().contains(&val) { return None }
+    let mut nbrs: Vec<Option<u8>> = Vec::new();
+    let mut test = 0;
+    for grp in vec!(BLK, ROW, COL) {
+      match self.binaryCand(cel, val, &grp) { 
+        Some(x) => {
+          test += 1;
+          if nbrs.len() > 0 { if let Some(n) = nbrs[0] { if n == x {
+            nbrs.push(None);
+            continue;
+          }}}
+          nbrs.push(Some(x));
+        }
+        None => { nbrs.push(None) }
+      }
+    }
+    if test == 0 { return None }
+    Some(nbrs)
   }
   pub fn solve(&mut self) {
     loop {
@@ -261,6 +297,8 @@ impl SuPuzzle {
       if self.boxLineReduction() { continue; }
       print!(" | Running xwings");
       if self.xwings() { continue; }
+      print!(" | Running simpleColouring");
+      if self.singles_chains() { continue; }
       print!(" | Running ywings");
       if self.ywings() { continue; }
       print!(" | ");
@@ -562,6 +600,61 @@ impl SuPuzzle {
           }
           return true;
         }
+      }
+    }
+    false
+  }
+  
+  pub fn singles_chains(&mut self) -> bool {
+    let tpuz = &self.clone();
+    for i in 1..10_u8 {
+      let mut chain = Chain::new(tpuz, i);
+      chain.colourer();
+      let mut colour_test = false;
+      let chain_hs = chain.to_hashset();
+      while !colour_test {
+        let scsg = chain.same_colour_same_group();
+        if let Some(grp_elim_cl) = scsg {
+          // Found simple colouring Same Group Same Colour eliminations
+          let grp_elim: Vec<u8> = grp_elim_cl.iter().map(|x| x.cel ).collect();
+          //println!("Puzzle : \n{}", self.puzStringWithPMarks());
+          println!("\nSimple Colouring by Colour Conflict: Eliminating {:?} from {}.", 
+                    i, self.cellsS(&grp_elim));
+          for fcn in &grp_elim {
+            let fcel = self.cell_mut(*fcn);
+            fcel.elimVal(i);
+          }
+          return true;
+        }
+        let tchain = chain.chain_colour_set();
+        let ends = &chain.chain_ends();
+        let ends_count = ends.len();
+        if (tchain.len() > 3) & (ends_count > 1) {
+          let pmtr: Permuter<usize> = Permuter::new(2, vecrange(ends_count));
+          for cels in pmtr {
+            let c1 = ends[cels[0]].colour;
+            let c2 = ends[cels[1]].colour;
+            if c1 != c2 {
+              let endsi: Vec<u8> = ends.into_iter().map(|x| x.cel ).collect();
+              let grp_elim = self.connectedAll(&endsi);
+              let grp_elim = keep(&grp_elim, |c| {
+                let cel = self.cell(c).clone();
+                cel.canBe(i) & !chain_hs.contains(&c)
+              });
+              if !grp_elim.is_empty() {
+                // Found simple colouring eliminations!
+                println!("\nSimple Colouring by Chain Ends{}: Eliminating {:?} from {}.", 
+                  self.cellsS(&endsi), i, self.cellsS(&grp_elim));
+                for fcn in &grp_elim {
+                  let fcel = self.cell_mut(*fcn);
+                  fcel.elimVal(i);
+                }
+                return true;
+              }
+            }
+          }
+        }
+        colour_test = chain.next_colour_set();
       }
     }
     false

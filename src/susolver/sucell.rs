@@ -3,6 +3,8 @@
 
 use std::collections::HashSet;
 
+use susolver::BRC;
+use susolver::BRC::*;
 use susolver::util::{c, mod3, mod9, grp3, grp9};
 
 #[derive(Debug, Copy, Clone)]
@@ -51,6 +53,14 @@ impl SuCell {
   
   pub fn brc(&self) -> (u8, u8, u8) {
     (self.block(), self.row(), self.col())
+  }
+  
+  pub fn sameGroup(&self, tcel: &SuCell, grp: &BRC) -> bool {
+    match grp {
+      &BLK => { self.block() == tcel.block() }
+      &ROW => { self.row() == tcel.row() }
+      &COL => { self.col() == tcel.col() }
+    }
   }
   
   pub fn locS(&self) -> String {
