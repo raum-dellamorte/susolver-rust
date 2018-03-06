@@ -1,6 +1,8 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
+#![feature(nll)]
 
+extern crate num;
 pub mod susolver;
 use susolver::supuzzle::SuPuzzle;
 
