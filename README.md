@@ -14,6 +14,8 @@ It works!  ~~It only does simple elimination at the moment, but it's a working s
 
 *BUG FIX* The code I used to determine the block number and the row and col inside a block was wrong which prevented the Pointing Pairs function from working.  The moment I eliminated that bug, the Pointing Pairs function did it's job and the entire puzzle was solved mostly with simple elimination from there on out.
 
+*CONCURRENCY* I'm planning to try my hand at concurrency and as a step towards this I'm reworking the way pencil marks are eliminated to a message based system, the idea being that I can start up threads to find rule matchs and send the result back to the main thread to be applied to the puzzle.  I also need a message system for incremental solving so SuSolver can be used as a library to solve a puzzle interactively.  That's been a goal all along but my first focus was primarily on solving.
+
 Working Strategies:
 - Hidden Singles
 - Naked Pairs and Triplets
@@ -69,28 +71,8 @@ savedSudoku-X-Wing01.txt contains:
 4 0 6  0 0 2  8 9 0
 0 0 0  4 0 0  0 1 0
 0 2 9  8 0 0  0 3 4
-Running simpleElim | A1 drop 9 | A1 drop 3 | A1 drop 4 | A1 drop 5 | A1 drop 6 | A4 drop 9 | A4 drop 3 | A4 drop 4 | A4
-drop 5 | A4 drop 6 | A4 drop 8 | A4 drop 2 | A5 drop 9 | A5 drop 3 | A5 drop 4 | A5 drop 5 | A5 drop 6 | A5 drop 8 | A5
-drop 7 | A9 drop 9 | A9 drop 3 | A9 drop 4 | A9 drop 5 | A9 drop 6 | A9 drop 1 | B1 drop 9 | B1 drop 3 | B1 drop 6 | B1
-drop 1 | B1 drop 4 | B3 drop 9 | B3 drop 3 | B3 drop 6 | B3 drop 1 | B3 drop 4 | B3 drop 7 | B3 drop 2 | B4 drop 4 | B4
-drop 6 | B4 drop 3 | B4 drop 1 | B4 drop 8 | B4 drop 2 | B5 drop 4 | B5 drop 6 | B5 drop 3 | B5 drop 1 | B5 drop 8 | B5
-drop 7 | B9 drop 5 | B9 drop 6 | B9 drop 3 | B9 drop 1 | B9 drop 4 | B9 drop 9 | C1 drop 9 | C1 drop 3 | C1 drop 6 | C1
-drop 4 | C1 drop 8 | C2 drop 9 | C2 drop 3 | C2 drop 6 | C2 drop 4 | C2 drop 8 | C2 drop 5 | C2 drop 2 | C5 drop 4 | C5
-drop 3 | C5 drop 6 | C5 drop 8 | C5 drop 9 | C5 drop 7 | C8 drop 5 | C8 drop 6 | C8 drop 1 | C8 drop 4 | C8 drop 8 | C8
-drop 3 | C8 drop 9 | D7 drop 5 | D7 drop 1 | D7 drop 3 | D7 drop 9 | D7 drop 8 | D7 drop 4 | D8 drop 6 | D8 drop 4 | D8
-drop 9 | D8 drop 8 | D8 drop 1 | D8 drop 3 | D8 drop 5 | D9 drop 9 | D9 drop 8 | D9 drop 1 | D9 drop 3 | D9 drop 4 | D9
-drop 5 | F4 drop 6 | F4 drop 3 | F4 drop 4 | F4 drop 5 | F4 drop 2 | F4 drop 8 | F4 drop 7 | F6 drop 4 | F6 drop 3 | F6
-drop 8 | F6 drop 5 | F6 drop 2 | F6 drop 6 | F6 drop 7 | G2 drop 9 | G2 drop 6 | G2 drop 8 | G2 drop 4 | G2 drop 5 | G2
-drop 2 | G4 drop 6 | G4 drop 3 | G4 drop 2 | G4 drop 4 | G4 drop 8 | G4 drop 9 | G5 drop 4 | G5 drop 8 | G5 drop 7 | G5
-drop 6 | G5 drop 2 | G5 drop 9 | G9 drop 9 | G9 drop 1 | G9 drop 3 | G9 drop 4 | G9 drop 6 | G9 drop 2 | G9 drop 8 | H1
-drop 9 | H1 drop 3 | H1 drop 6 | H1 drop 4 | H1 drop 1 | H1 drop 2 | H2 drop 9 | H2 drop 6 | H2 drop 8 | H2 drop 4 | H2
-drop 5 | H2 drop 1 | H2 drop 2 | H3 drop 3 | H3 drop 4 | H3 drop 1 | H3 drop 7 | H3 drop 2 | H3 drop 6 | H3 drop 9 | H5
-drop 4 | H5 drop 8 | H5 drop 7 | H5 drop 2 | H5 drop 1 | H6 drop 4 | H6 drop 3 | H6 drop 8 | H6 drop 5 | H6 drop 6 | H6
-drop 2 | H6 drop 1 | H7 drop 5 | H7 drop 1 | H7 drop 3 | H7 drop 9 | H7 drop 4 | H7 drop 8 | H9 drop 9 | H9 drop 1 | H9
-drop 3 | H9 drop 8 | H9 drop 4 | I1 drop 9 | I1 drop 3 | I1 drop 6 | I1 drop 4 | I1 drop 2 | I1 drop 8 | I5 drop 4 | I5
-drop 8 | I5 drop 7 | I5 drop 2 | I5 drop 9 | I5 drop 3 | I6 drop 4 | I6 drop 3 | I6 drop 8 | I6 drop 5 | I6 drop 6 | I6
-drop 2 | I6 drop 9 | I7 drop 5 | I7 drop 1 | I7 drop 3 | I7 drop 9 | I7 drop 4 | I7 drop 8 | I7 drop 2
-Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs
+Running simpleElim | <A1>: drop [3, 4, 5, 6, 9] | <A4>: drop [2, 3, 4, 5, 6, 8, 9] | <A5>: drop [3, 4, 5, 6, 7, 8, 9] |<A9>: drop [1, 3, 4, 5, 6, 9] | <B1>: drop [1, 3, 4, 6, 9] | <B3>: drop [1, 2, 3, 4, 6, 7, 9] | <B4>: drop [1, 2, 3, 4,6, 8] | <B5>: drop [1, 3, 4, 6, 7, 8] | <B9>: drop [1, 3, 4, 5, 6, 9] | <C1>: drop [3, 4, 6, 8, 9] | <C2>: drop [2, 3, 4, 5, 6, 8, 9] | <C5>: drop [3, 4, 6, 7, 8, 9] | <C8>: drop [1, 3, 4, 5, 6, 8, 9] | <D7>: drop [1, 3, 4, 5, 8, 9] | <D8>: drop [1, 3, 4, 5, 6, 8, 9] | <D9>: drop [1, 3, 4, 5, 8, 9] | <F4>: drop [2, 3, 4, 5, 6, 7, 8] | <F6>: drop [2, 3, 4, 5, 6, 7, 8] | <G2>: drop [2, 4, 5, 6, 8, 9] | <G4>: drop [2, 3, 4, 6, 8, 9] | <G5>: drop [2, 4, 6, 7, 8, 9] | <G9>: drop [1, 2, 3, 4, 6, 8, 9] | <H1>: drop [1, 2, 3, 4, 6, 9] | <H2>: drop [1, 2, 4, 5, 6, 8, 9] | <H3>: drop [1, 2, 3, 4, 6, 7,9] | <H5>: drop [1, 2, 4, 7, 8] | <H6>: drop [1, 2, 3, 4, 5, 6, 8] | <H7>: drop [1, 3, 4, 5, 8, 9] | <H9>: drop [1, 3, 4, 8, 9] | <I1>: drop [2, 3, 4, 6, 8, 9] | <I5>: drop [2, 3, 4, 7, 8, 9] | <I6>: drop [2, 3, 4, 5, 6, 8, 9] | <I7>: drop[1, 2, 3, 4, 5, 8, 9]
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs
 Pointing Pair<A4, B4>: Eliminating 7 from <G4>.
 Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings
 X-Wing<C1, C5, I1, I5>: Eliminating 5 from <B1, H1, B5, G5, H5>
@@ -98,89 +80,55 @@ Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hi
 Y-Wing<G4<A4, G9>>: Eliminating 7 from <A9>
 Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running simpleColouring | Running ywings
 Y-Wing<G4<G9, I6>>: Eliminating 7 from <I7>
-
 Cell I7 solved as 6
-Running simpleElim | D7 drop 6 | H7 drop 6 | H9 drop 6 | I5 drop 6
-Running hiddenSingle
-hiddenSingle 6 found for D9
+Running simpleElim | <D7>: drop [6] | <H7>: drop [6] | <H9>: drop [6] | <I5>: drop [6]
+Running simpleElim | Running hiddenSingle | hiddenSingle<D9=6>: drop [2, 7] | hiddenSingle<H5=6>: drop [3, 9]
 Cell D9 solved as 6
-Running simpleElim | Running hiddenSingle
-hiddenSingle 6 found for H5
 Cell H5 solved as 6
-Running simpleElim | Running hiddenSingle
-hiddenSingle 9 found for B5
+Running simpleElim | Running hiddenSingle | hiddenSingle<B5=9>: drop [2] | hiddenSingle<G5=3>: drop [1] | hiddenSingle<H2=3>: drop [7] | hiddenSingle<H6=9>: drop [7]
 Cell B5 solved as 9
-Running simpleElim | B4 drop 9
-Running hiddenSingle
-hiddenSingle 9 found for F4
-Cell F4 solved as 9
-Running simpleElim | F6 drop 9
-Cell F6 solved as 1
- | I6 drop 1
-Cell I6 solved as 7
- | H6 drop 7
-Cell H6 solved as 9
- | I1 drop 7
-Running hiddenSingle
-hiddenSingle 3 found for G5
 Cell G5 solved as 3
-Running simpleElim | G2 drop 3
-Running hiddenSingle
-hiddenSingle 3 found for H2
 Cell H2 solved as 3
+Cell H6 solved as 9
+Running simpleElim | <B4>: drop [9] | <F6>: drop [9] | <G2>: drop [3]
+Cell F6 solved as 1
+Running simpleElim | <F4>: drop [1] | <I6>: drop [1]
+Cell F4 solved as 9
+Cell I6 solved as 7
+Running simpleElim | <I1>: drop [7]
 Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running simpleColouring
 Simple Colouring by Chain Ends<A4, C2>: Eliminating 1 from <A1, C5>.
 Running simpleElim | Running hiddenSingle | Running nakedPairsTrips
-Naked Triplet<A1, B1, H1>: Eliminating [2, 7, 8] from <C1>
+Naked Triplet<A1, B1, H1>: Eliminating [7, 8, 2] from <C1>
 Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running simpleColouring
 Simple Colouring by Colour Conflict: Eliminating 7 from <B9, C2, D8, G9, H1, H7>.
-
 Cell C2 solved as 1
-
 Cell D8 solved as 2
-
 Cell G9 solved as 5
-
 Cell H1 solved as 8
-
 Cell H7 solved as 2
-Running simpleElim | A1 drop 8 | B1 drop 8 | C1 drop 1
+Running simpleElim | <A1>: drop [8] | <B1>: drop [8] | <C1>: drop [1] | <C8>: drop [2] | <D7>: drop [2] | <G2>: drop [1] | <G4>: drop [5] | <H3>: drop [8] | <H9>: drop [2, 5]
 Cell C1 solved as 5
- | B3 drop 5
-Cell B3 solved as 8
- | B9 drop 8
-Cell B9 solved as 2
- | A9 drop 2
-Cell A9 solved as 8
- | B1 drop 2
-Cell B1 solved as 7
- | A1 drop 7
-Cell A1 solved as 2
- | A5 drop 2
-Cell A5 solved as 1
- | A4 drop 1
-Cell A4 solved as 7
- | B4 drop 7
-Cell B4 solved as 5
- | C5 drop 5
-Cell C5 solved as 2
- | C8 drop 2
 Cell C8 solved as 7
- | D7 drop 2
 Cell D7 solved as 7
- | G2 drop 1
 Cell G2 solved as 7
- | G4 drop 5
 Cell G4 solved as 1
- | H3 drop 8
 Cell H3 solved as 5
- | H9 drop 2 | H9 drop 5
 Cell H9 solved as 7
- | I1 drop 5
+Running simpleElim | <A4>: drop [1] | <B3>: drop [5] | <C5>: drop [5] | <I1>: drop [5] | <I5>: drop [1]
+Cell A4 solved as 7
+Cell B3 solved as 8
+Cell C5 solved as 2
 Cell I1 solved as 1
- | I5 drop 1
 Cell I5 solved as 5
-
+Running simpleElim | <A1>: drop [7] | <A5>: drop [2] | <B4>: drop [7] | <B9>: drop [8]
+Cell A1 solved as 2
+Cell A5 solved as 1
+Cell B4 solved as 5
+Cell B9 solved as 2
+Running simpleElim | <A9>: drop [2] | <B1>: drop [2]
+Cell A9 solved as 8
+Cell B1 solved as 7
 Finished
 Puzzle :
 + - +   * - *   * - *     + - +   + - +   * - *     * - *   * - *   + - +

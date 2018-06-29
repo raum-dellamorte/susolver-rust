@@ -5,12 +5,18 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use std::collections::HashSet;
+//use std::thread;
 
 use susolver::util::{all_true, c, keep, Permuter, plistRemainder, plistSetToVec, vecrange};
 use susolver::sucell::SuCell;
 use susolver::chains::Chain; //, ChainLink};
 use susolver::BRC;
 use susolver::BRC::*;
+//use susolver::celltasks::SuElim;
+use susolver::celltasks::SuElim::*;
+//use susolver::celltasks::SuRule;
+use susolver::celltasks::SuRule::*;
+use susolver::celltasks::CellTasks;
 
 #[derive(Debug, Clone)]
 pub struct SuPuzzle {
@@ -254,6 +260,9 @@ impl SuPuzzle {
   pub fn unsolvedCells(&self) -> Vec<u8> {
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| !self.cell(i).solved() )
   }
+  pub fn pmsolvedCells(&self) -> Vec<u8> {
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| self.cell(i).pmsolved() )
+  }
   fn binaryCand(&self, cel: u8, val: u8, grp: &BRC) -> Option<u8> {
     match &self.sameGroupContains(cel, val, grp) {
       x if x.len() == 1 => { Some(x[0]) }
@@ -282,11 +291,14 @@ impl SuPuzzle {
   }
   pub fn solve(&mut self) {
     loop {
-      print!("Running simpleElim");
-      if self.simpleElim() { print!("\n"); } else { print!(" | "); }
+      for c in self.pmsolvedCells() {
+        self.cell_mut(c).checkSolve();
+      }
       if self.solvedCells().len() == 81 { break; }
+      print!("Running simpleElim");
+      if self.proc_cell_updates(self.simpleElim() as CellTasks) { continue; } else { print!(" | "); }
       print!("Running hiddenSingle");
-      if self.hiddenSingle() { continue; }
+      if self.proc_cell_updates(self.hiddenSingle()) { continue; }
       print!(" | Running nakedPairsTrips");
       if self.nakedPairsTrips() { continue; }
       print!(" | Running hiddenPairsTrips");
@@ -306,30 +318,46 @@ impl SuPuzzle {
     }
     println!("Finished");
   }
-  pub fn simpleElim(&mut self) -> bool {
-    let mut out = false;
-    'outer: loop {
-      let test = self.unsolvedCells();
-      for cp in &test {
-        let tmp = self.connectedSolved(self.cell(*cp));
-        for tpos in &tmp {
-          let tval = self.cell(*tpos).val;
-          if self.cell(*cp).canBe(tval) {
-            let cel = self.cell_mut(*cp);
-            print!(" | {} drop {}", cel.locS(), tval);
-            cel.elimVal(tval);
-            out = true;
-            if cel.val > 0_u8 { continue 'outer; }
+  fn proc_cell_updates(&mut self, tasks: CellTasks) -> bool {
+    if tasks.is_empty() { return false }
+    for task in tasks.tasks {
+      match task.op {
+        ELIM => {
+          print!(" | {}", task.msg());
+          match task.rule {
+            SIMPLEELIM | HIDDENSINGLE => {
+              if let Some(pos) = task.cell {
+                self.cell_mut(pos).elimVals(&task.vals_vec());
+              }
+            }
+            _ => {}
           }
         }
+        NOOP => {}
       }
-      break 'outer;
+    }
+    print!("\n");
+    true
+  }
+  pub fn simpleElim(&self) -> CellTasks {
+    let mut out = CellTasks::new();
+    let test = self.unsolvedCells();
+    for cp in &test {
+      let task = out.new_task().set_rule(SIMPLEELIM).def_cell(*cp);
+      let tmp = self.connectedSolved(self.cell(*cp));
+      for tpos in &tmp {
+        let tval = self.cell(*tpos).val;
+        if self.cell(*cp).canBe(tval) { task.elim().vals_push(tval); }
+      }
+      out.pop_noop();
     }
     out
   }
-  pub fn hiddenSingle(&mut self) -> bool {
+  pub fn hiddenSingle(&self) -> CellTasks {
     let test = self.unsolvedCells();
+    let mut out = CellTasks::new();
     for cp in &test {
+      let task = out.new_task().set_rule(HIDDENSINGLE).def_cell(*cp);
       let pmarx = self.cell(*cp).pmarks;
       for cand in 0..9 {
         if !pmarx[cand] {continue;}
@@ -346,19 +374,19 @@ impl SuPuzzle {
           }
         }
         if ((cntc == 0) || (cntr == 0)) || (cntb == 0) {
-          let mut elims: Vec<u8> = Vec::new();
+          task.elim().set_val((cand + 1) as u8);
           for i in 0..9 {
             if i == cand { continue; }
-            elims.push((i + 1) as u8);
+            let tval = (i + 1) as u8;
+            if self.cell(*cp).canBe(tval) { task.vals_push(tval); }
           }
-          let cel = self.cell_mut(*cp);
-          print!("\nhiddenSingle {} found for {}", cand + 1, cel.locS());
-          cel.elimVals(&elims);
-          return true;
+          //let cel = self.cell_mut(*cp);
+          //print!("\nhiddenSingle {} found for {}", cand + 1, cel.locS());
         }
       }
+      out.pop_noop();
     }
-    false
+    out
   }
   fn fixNakedPairsTrips(&mut self, cels: &[u8], mut toFix: Vec<u8>, fvals: Vec<u8>) -> bool {
     toFix.retain(|x| self.cell(*x).canBeAny(&fvals) ); // If there's nothing to fix, don't fix it.

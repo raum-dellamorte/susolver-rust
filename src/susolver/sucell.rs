@@ -74,33 +74,39 @@ impl SuCell {
     }
     out
   }
+  pub fn pmarksVec(&self) -> Vec<u8> {
+    let mut out: Vec<u8> = vec![];
+    for i in 0..9 {
+      if self.pmarks[i] { out.push((i + 1) as u8); }
+    }
+    out
+  }
   
-  fn checkSolve(&mut self) {
-    if self.solved() {
-      for i in 0..9 {
-        if !self.pmarks[i] {continue}
-        self.val = (i + 1) as u8;
-        println!("\nCell {} solved as {}", self.locS(), self.val);
-        break;
-      }
+  pub fn checkSolve(&mut self) {
+    if self.pmsolved() {
+      self.val = self.pmarksVec()[0];
+      println!("Cell {} solved as {}", self.locS(), self.val);
     }
   }
   
   pub fn elimVal(&mut self, n: u8) {
     self.pmarks[c(n)] = false;
-    self.checkSolve();
   }
   
   pub fn elimVals(&mut self, ns: &[u8]) {
     for n in ns {
       self.pmarks[c(*n)] = false;
     }
-    self.checkSolve();
   }
   
   pub fn solved(&self) -> bool {
-    let sum = self.pmarks.iter().fold(0,|a, &b| if b {a + 1} else {a});
-    self.clue || (sum == 1)
+    self.clue || (self.val > 0_u8)
+  }
+  pub fn pmsolved(&self) -> bool {
+    if self.solved() { return false }
+    //let sum = self.pmarks.iter().fold(0,|a, &b| if b {a + 1} else {a});
+    //return sum == 1
+    return self.pmarksVec().len() == 1
   }
   pub fn canBe(&self, n: u8) -> bool {
     self.pmarks[c(n)]

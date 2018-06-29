@@ -6,6 +6,13 @@ use std::collections::{HashSet, VecDeque};
 use num::{PrimInt, Unsigned};
 use std::ops::{Add};
 
+// Debug
+pub fn pause(n: u64) {
+  use std;
+  std::thread::sleep(std::time::Duration::from_millis(n));
+}
+// END Debug
+
 #[derive(Debug, Clone)]
 pub struct Permuter<T: PrimInt + Unsigned + Clone> {
     output_length: usize,
@@ -180,4 +187,47 @@ pub fn all_true<F>(vals: &[u8], f: F) -> bool
     out = out && f(*v);
   }
   out
+}
+
+pub fn col(pos: u8) -> u8 {
+  mod9(pos)
+}
+
+pub fn colS(pos: u8) -> char {
+  (48_u8 + col(pos)) as char
+}
+
+pub fn row(pos: u8) -> u8 {
+  grp9(pos)
+}
+
+pub fn rowS(pos: u8) -> char {
+  (64_u8 + row(pos)) as char
+}
+
+pub fn bcol(pos: u8) -> u8 {
+  mod3(col(pos))
+}
+
+pub fn brow(pos: u8) -> u8 {
+  mod3(row(pos))
+}
+
+pub fn block(pos: u8) -> u8 {
+  ((grp3(row(pos)) - 1) * 3) + grp3(col(pos))
+}
+
+pub fn block3(pos: u8, rc: isize) -> u8 {
+  match rc {
+    0 => { grp3(block(pos)) }
+    _ => { mod3(block(pos)) }
+  }
+}
+
+pub fn brc(pos: u8) -> (u8, u8, u8) {
+  (block(pos), row(pos), col(pos))
+}
+
+pub fn locS(pos: u8) -> String {
+  format!("{}{}", rowS(pos), colS(pos))
 }
