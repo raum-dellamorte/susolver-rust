@@ -71,7 +71,7 @@ savedSudoku-X-Wing01.txt contains:
 4 0 6  0 0 2  8 9 0
 0 0 0  4 0 0  0 1 0
 0 2 9  8 0 0  0 3 4
-Running simpleElim | <A1>: drop [3, 4, 5, 6, 9] | <A4>: drop [2, 3, 4, 5, 6, 8, 9] | <A5>: drop [3, 4, 5, 6, 7, 8, 9] |<A9>: drop [1, 3, 4, 5, 6, 9] | <B1>: drop [1, 3, 4, 6, 9] | <B3>: drop [1, 2, 3, 4, 6, 7, 9] | <B4>: drop [1, 2, 3, 4,6, 8] | <B5>: drop [1, 3, 4, 6, 7, 8] | <B9>: drop [1, 3, 4, 5, 6, 9] | <C1>: drop [3, 4, 6, 8, 9] | <C2>: drop [2, 3, 4, 5, 6, 8, 9] | <C5>: drop [3, 4, 6, 7, 8, 9] | <C8>: drop [1, 3, 4, 5, 6, 8, 9] | <D7>: drop [1, 3, 4, 5, 8, 9] | <D8>: drop [1, 3, 4, 5, 6, 8, 9] | <D9>: drop [1, 3, 4, 5, 8, 9] | <F4>: drop [2, 3, 4, 5, 6, 7, 8] | <F6>: drop [2, 3, 4, 5, 6, 7, 8] | <G2>: drop [2, 4, 5, 6, 8, 9] | <G4>: drop [2, 3, 4, 6, 8, 9] | <G5>: drop [2, 4, 6, 7, 8, 9] | <G9>: drop [1, 2, 3, 4, 6, 8, 9] | <H1>: drop [1, 2, 3, 4, 6, 9] | <H2>: drop [1, 2, 4, 5, 6, 8, 9] | <H3>: drop [1, 2, 3, 4, 6, 7,9] | <H5>: drop [1, 2, 4, 7, 8] | <H6>: drop [1, 2, 3, 4, 5, 6, 8] | <H7>: drop [1, 3, 4, 5, 8, 9] | <H9>: drop [1, 3, 4, 8, 9] | <I1>: drop [2, 3, 4, 6, 8, 9] | <I5>: drop [2, 3, 4, 7, 8, 9] | <I6>: drop [2, 3, 4, 5, 6, 8, 9] | <I7>: drop[1, 2, 3, 4, 5, 8, 9]
+Running simpleElim | <A1>: drop [3, 4, 5, 6, 9] | <A4>: drop [2, 3, 4, 5, 6, 8, 9] | <A5>: drop [3, 4, 5, 6, 7, 8, 9] | <A9>: drop [1, 3, 4, 5, 6, 9] | <B1>: drop [1, 3, 4, 6, 9] | <B3>: drop [1, 2, 3, 4, 6, 7, 9] | <B4>: drop [1, 2, 3, 4, 6, 8] | <B5>: drop [1, 3, 4, 6, 7, 8] | <B9>: drop [1, 3, 4, 5, 6, 9] | <C1>: drop [3, 4, 6, 8, 9] | <C2>: drop [2, 3, 4, 5, 6, 8, 9] | <C5>: drop [3, 4, 6, 7, 8, 9] | <C8>: drop [1, 3, 4, 5, 6, 8, 9] | <D7>: drop [1, 3, 4, 5, 8, 9] | <D8>: drop [1, 3, 4, 5, 6, 8, 9] | <D9>: drop [1, 3, 4, 5, 8, 9] | <F4>: drop [2, 3, 4, 5, 6, 7, 8] | <F6>: drop [2, 3, 4, 5, 6, 7, 8] | <G2>: drop [2, 4, 5, 6, 8, 9] | <G4>: drop [2, 3, 4, 6, 8, 9] | <G5>: drop [2, 4, 6, 7, 8, 9] | <G9>: drop [1, 2, 3, 4, 6, 8, 9] | <H1>: drop [1, 2, 3, 4, 6, 9] | <H2>: drop [1, 2, 4, 5, 6, 8, 9] | <H3>: drop [1, 2, 3, 4, 6, 7, 9] | <H5>: drop [1, 2, 4, 7, 8] | <H6>: drop [1, 2, 3, 4, 5, 6, 8] | <H7>: drop [1, 3, 4, 5, 8, 9] | <H9>: drop [1, 3, 4, 8, 9] | <I1>: drop [2, 3, 4, 6, 8, 9] | <I5>: drop [2, 3, 4, 7, 8, 9] | <I6>: drop [2, 3, 4, 5, 6, 8, 9] | <I7>: drop [1, 2, 3, 4, 5, 8, 9]
 Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs
 Pointing Pair<A4, B4>: Eliminating 7 from <G4>.
 Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings
@@ -98,8 +98,7 @@ Cell I6 solved as 7
 Running simpleElim | <I1>: drop [7]
 Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running simpleColouring
 Simple Colouring by Chain Ends<A4, C2>: Eliminating 1 from <A1, C5>.
-Running simpleElim | Running hiddenSingle | Running nakedPairsTrips
-Naked Triplet<A1, B1, H1>: Eliminating [7, 8, 2] from <C1>
+Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Naked Triplet<A1, B1, H1>: Eliminating {7, 2, 8} from <C1>
 Running simpleElim | Running hiddenSingle | Running nakedPairsTrips | Running hiddenPairsTrips | Running pointingPairs | Running boxLineReduction | Running xwings | Running simpleColouring
 Simple Colouring by Colour Conflict: Eliminating 7 from <B9, C2, D8, G9, H1, H7>.
 Cell C2 solved as 1

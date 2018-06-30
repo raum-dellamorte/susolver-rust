@@ -16,7 +16,7 @@ use susolver::BRC::*;
 use susolver::celltasks::SuElim::*;
 //use susolver::celltasks::SuRule;
 use susolver::celltasks::SuRule::*;
-use susolver::celltasks::CellTasks;
+use susolver::celltasks::{CellTasks, CellTask};
 
 #[derive(Debug, Clone)]
 pub struct SuPuzzle {
@@ -300,7 +300,7 @@ impl SuPuzzle {
       print!("Running hiddenSingle");
       if self.proc_cell_updates(self.hiddenSingle()) { continue; }
       print!(" | Running nakedPairsTrips");
-      if self.nakedPairsTrips() { continue; }
+      if self.proc_cell_updates(self.nakedPairsTrips()) { continue; }
       print!(" | Running hiddenPairsTrips");
       if self.hiddenPairsTrips() { continue; }
       print!(" | Running pointingPairs");
@@ -326,8 +326,13 @@ impl SuPuzzle {
           print!(" | {}", task.msg());
           match task.rule {
             SIMPLEELIM | HIDDENSINGLE => {
-              if let Some(pos) = task.cell {
-                self.cell_mut(pos).elimVals(&task.vals_vec());
+              if let Some(pos) = task.elim {
+                self.cell_mut(pos).elimVals(&task.elimvals_vec());
+              }
+            }
+            NAKEDGRP => {
+              for pos in &task.elims {
+                self.cell_mut(*pos).elimVals(&task.elimvals_vec());
               }
             }
             _ => {}
@@ -343,11 +348,11 @@ impl SuPuzzle {
     let mut out = CellTasks::new();
     let test = self.unsolvedCells();
     for cp in &test {
-      let task = out.new_task().set_rule(SIMPLEELIM).def_cell(*cp);
+      let task = out.new_task().set_rule(SIMPLEELIM).elim_cell(*cp);
       let tmp = self.connectedSolved(self.cell(*cp));
       for tpos in &tmp {
         let tval = self.cell(*tpos).val;
-        if self.cell(*cp).canBe(tval) { task.elim().vals_push(tval); }
+        if self.cell(*cp).canBe(tval) { task.op_elim().elimvals_push(tval); }
       }
       out.pop_noop();
     }
@@ -357,7 +362,7 @@ impl SuPuzzle {
     let test = self.unsolvedCells();
     let mut out = CellTasks::new();
     for cp in &test {
-      let task = out.new_task().set_rule(HIDDENSINGLE).def_cell(*cp);
+      let task = out.new_task().set_rule(HIDDENSINGLE).elim_cell(*cp);
       let pmarx = self.cell(*cp).pmarks;
       for cand in 0..9 {
         if !pmarx[cand] {continue;}
@@ -374,11 +379,11 @@ impl SuPuzzle {
           }
         }
         if ((cntc == 0) || (cntr == 0)) || (cntb == 0) {
-          task.elim().set_val((cand + 1) as u8);
+          task.op_elim().set_keepval((cand + 1) as u8);
           for i in 0..9 {
             if i == cand { continue; }
             let tval = (i + 1) as u8;
-            if self.cell(*cp).canBe(tval) { task.vals_push(tval); }
+            if self.cell(*cp).canBe(tval) { task.elimvals_push(tval); }
           }
           //let cel = self.cell_mut(*cp);
           //print!("\nhiddenSingle {} found for {}", cand + 1, cel.locS());
@@ -388,35 +393,31 @@ impl SuPuzzle {
     }
     out
   }
-  fn fixNakedPairsTrips(&mut self, cels: &[u8], mut toFix: Vec<u8>, fvals: Vec<u8>) -> bool {
+  fn fixNakedPairsTrips(&self, task: &mut CellTask, mut toFix: Vec<u8>, fvals: Vec<u8>) {
     toFix.retain(|x| self.cell(*x).canBeAny(&fvals) ); // If there's nothing to fix, don't fix it.
     if !toFix.is_empty() {
       // Found Naked Pair or Trip!
-      let pairtrip = match cels.len() {
-        2 => { "Naked Pair" }
-        3 => { "Naked Triplet" }
-        _ => { return false }
-      };
-      println!("\n{}{}: Eliminating {:?} from {}", pairtrip, self.cellsS(cels), fvals, self.cellsS(&toFix));
       for fcp in &toFix {
-        let fcel = self.cell_mut(*fcp);
-        fcel.elimVals(&fvals);
+        task.op_elim()
+            .elims_push(*fcp)
+            .elimvals_push_all(&fvals);
       }
-      return true;
     }
-    false
   }
-  pub fn nakedPairsTrips(&mut self) -> bool {
+  pub fn nakedPairsTrips(&self) -> CellTasks {
+    let mut out = CellTasks::new();
     let test = self.pmarks2or3();
     for cels in Permuter::new(2, test.clone()).add_length(3) {
       if !self.inSameGroup(&cels) { continue; }
+      let task = out.new_task().set_rule(NAKEDGRP).keeps_push_all(&cels);
       let pmu = self.pmarksUnion(&cels);
       if pmu.len() == cels.len() {
         let toFix = self.connectedAllUnsolved(&cels);
-        if self.fixNakedPairsTrips(&cels, toFix, pmu.into_iter().collect()) { return true; } else { continue; }
+        self.fixNakedPairsTrips(task, toFix, pmu.into_iter().collect()); // if * { return true; } else { continue; }
       }
+      out.pop_noop();
     }
-    false
+    out
   }
   fn hpCands(&self, c1p: u8, c2p: u8) -> bool {
     let c1 = self.cell(c1p);

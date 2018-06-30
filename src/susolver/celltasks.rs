@@ -1,6 +1,6 @@
 
 use std::collections::HashSet;
-use susolver::util::locS;
+use susolver::util::{loc_str, locs_str};
 
 pub enum SuElim {
   ELIM,
@@ -24,10 +24,14 @@ use susolver::celltasks::SuElim::*;
 use susolver::celltasks::SuRule::*;
 
 pub struct CellTask {
-  pub cell: Option<u8>,
-  pub cells: HashSet<u8>,
-  pub val: Option<u8>,
-  pub vals: HashSet<u8>,
+  pub keep: Option<u8>,
+  pub keeps: HashSet<u8>,
+  pub elim: Option<u8>,
+  pub elims: HashSet<u8>,
+  pub keepval: Option<u8>,
+  pub keepvals: HashSet<u8>,
+  pub elimval: Option<u8>,
+  pub elimvals: HashSet<u8>,
   pub op: SuElim,
   pub rule: SuRule,
 }
@@ -35,15 +39,19 @@ pub struct CellTask {
 impl CellTask {
   pub fn new() -> CellTask {
     CellTask {
-      cell: None,
-      cells: HashSet::new(),
-      val: None,
-      vals: HashSet::new(),
+      keep: None,
+      keeps: HashSet::new(),
+      elim: None,
+      elims: HashSet::new(),
+      keepval: None,
+      keepvals: HashSet::new(),
+      elimval: None,
+      elimvals: HashSet::new(),
       op: NOOP,
       rule: NORULE,
     }
   }
-  pub fn elim(&mut self) -> &mut Self {
+  pub fn op_elim(&mut self) -> &mut Self {
     match self.op {
       ELIM => {}
       NOOP => { self.op = ELIM; }
@@ -57,24 +65,68 @@ impl CellTask {
     }
     self
   }
-  pub fn def_cell(&mut self, cel: u8) -> &mut Self {
-    self.cell = Some(cel);
+  pub fn keep_cell(&mut self, cel: u8) -> &mut Self {
+    self.keep = Some(cel);
     self
   }
-  pub fn clr_def_cell(&mut self) -> &mut Self {
-    self.cell = None;
+  pub fn clr_keep_cell(&mut self) -> &mut Self {
+    self.keep = None;
     self
   }
-  pub fn add_to_cells(&mut self, cel: u8) -> &mut Self {
-    self.cells.insert(cel);
+  pub fn elim_cell(&mut self, cel: u8) -> &mut Self {
+    self.elim = Some(cel);
     self
   }
-  pub fn set_val(&mut self, val: u8) -> &mut Self {
-    self.val = Some(val);
+  pub fn clr_elim_cell(&mut self) -> &mut Self {
+    self.elim = None;
     self
   }
-  pub fn vals_push(&mut self, val: u8) -> &mut Self {
-    self.vals.insert(val);
+  pub fn keeps_push(&mut self, cel: u8) -> &mut Self {
+    self.keeps.insert(cel);
+    self
+  }
+  pub fn keeps_push_all(&mut self, cells: &[u8]) -> &mut Self {
+    for cell in cells {
+      self.keeps.insert(*cell);
+    }
+    self
+  }
+  pub fn elims_push(&mut self, cel: u8) -> &mut Self {
+    self.elims.insert(cel);
+    self
+  }
+  pub fn elims_push_all(&mut self, cells: &[u8]) -> &mut Self {
+    for cell in cells {
+      self.elims.insert(*cell);
+    }
+    self
+  }
+  pub fn set_keepval(&mut self, val: u8) -> &mut Self {
+    self.keepval = Some(val);
+    self
+  }
+  pub fn set_elimval(&mut self, val: u8) -> &mut Self {
+    self.elimval = Some(val);
+    self
+  }
+  pub fn keepvals_push(&mut self, val: u8) -> &mut Self {
+    self.keepvals.insert(val);
+    self
+  }
+  pub fn elimvals_push(&mut self, val: u8) -> &mut Self {
+    self.elimvals.insert(val);
+    self
+  }
+  pub fn keepvals_push_all(&mut self, vals: &[u8]) -> &mut Self {
+    for val in vals {
+      self.keepvals.insert(*val);
+    }
+    self
+  }
+  pub fn elimvals_push_all(&mut self, vals: &[u8]) -> &mut Self {
+    for val in vals {
+      self.elimvals.insert(*val);
+    }
     self
   }
   pub fn set_rule(&mut self, rule: SuRule) -> &mut Self {
@@ -82,13 +134,22 @@ impl CellTask {
     self
   }
   pub fn msg(&self) -> String {
-    if self.vals.is_empty() { return String::new() }
+    if self.elimvals.is_empty() { return String::new() }
     match self.rule {
       SIMPLEELIM   => { format!("<{}>: drop {:?}", 
-                          self.cell_str(), &self.vals_vec())}
+                          self.elim_str(), &self.elimvals_vec())}
       HIDDENSINGLE => { format!("hiddenSingle<{}={}>: drop {:?}", 
-                          self.cell_str(), self.val.unwrap(), &self.vals_vec()) }
-      NAKEDGRP     => { format!("") }
+                          self.elim_str(), self.keepval.unwrap(), &self.elimvals_vec()) }
+      NAKEDGRP     => {
+        let pairtrip = match self.keeps.len() {
+          2 => { "Naked Pair" }
+          3 => { "Naked Triplet" }
+          _ => { "Naked Error" }
+        };
+        format!("{}{}: Eliminating {:?} from {}", 
+          pairtrip, locs_str(&self.keeps_vec()), 
+          self.elimvals, locs_str(&self.elims_vec()))
+      }
       HIDDENGRP    => { format!("") }
       POINTINGPAIR => { format!("") }
       BOXLINEREDUX => { format!("") }
@@ -98,29 +159,56 @@ impl CellTask {
       NORULE => String::new()
     }
   }
-  pub fn vals_vec(&self) -> Vec<u8> {
+  pub fn keepvals_vec(&self) -> Vec<u8> {
     let mut out = vec![];
-    for i in 1..10_u8 { if self.vals.contains(&i) { out.push(i); } }
+    for i in 1..10_u8 { if self.keepvals.contains(&i) { out.push(i); } }
     out
   }
-  pub fn cells_vec(&self) -> Vec<u8> {
+  pub fn elimvals_vec(&self) -> Vec<u8> {
     let mut out = vec![];
-    for i in 1..82_u8 { if self.cells.contains(&i) { out.push(i); } }
+    for i in 1..10_u8 { if self.elimvals.contains(&i) { out.push(i); } }
     out
   }
-  fn cell_str(&self) -> String {
-    if self.cell.is_none() { return String::new() }
-    locS(self.cell.unwrap())
+  pub fn keeps_vec(&self) -> Vec<u8> {
+    let mut out = vec![];
+    for i in 1..82_u8 { if self.keeps.contains(&i) { out.push(i); } }
+    out
   }
-  fn cells_str(&self) -> String {
-    if self.cells.is_empty() { return String::new() }
-    let cels: Vec<u8> = self.cells_vec();
+  pub fn elims_vec(&self) -> Vec<u8> {
+    let mut out = vec![];
+    for i in 1..82_u8 { if self.elims.contains(&i) { out.push(i); } }
+    out
+  }
+  fn keep_str(&self) -> String {
+    if self.keep.is_none() { return String::new() }
+    loc_str(self.keep.unwrap())
+  }
+  fn elim_str(&self) -> String {
+    if self.elim.is_none() { return String::new() }
+    loc_str(self.elim.unwrap())
+  }
+  fn keeps_str(&self) -> String {
+    if self.keeps.is_empty() { return String::new() }
+    let cels: Vec<u8> = self.keeps_vec();
     let mut out = String::new();
     for pos in cels {
       if out.is_empty() {
-        out = format!("{}", locS(pos))
+        out = format!("{}", loc_str(pos))
       } else {
-        out = format!("{}, {}", out, locS(pos))
+        out = format!("{}, {}", out, loc_str(pos))
+      }
+    }
+    out
+  }
+  fn elims_str(&self) -> String {
+    if self.elims.is_empty() { return String::new() }
+    let cels: Vec<u8> = self.elims_vec();
+    let mut out = String::new();
+    for pos in cels {
+      if out.is_empty() {
+        out = format!("{}", loc_str(pos))
+      } else {
+        out = format!("{}, {}", out, loc_str(pos))
       }
     }
     out

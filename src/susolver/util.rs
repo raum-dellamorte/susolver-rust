@@ -228,6 +228,16 @@ pub fn brc(pos: u8) -> (u8, u8, u8) {
   (block(pos), row(pos), col(pos))
 }
 
-pub fn locS(pos: u8) -> String {
+pub fn loc_str(pos: u8) -> String {
   format!("{}{}", rowS(pos), colS(pos))
+}
+
+pub fn locs_str(cels: &[u8]) -> String {
+  let mut out = String::new();
+  let mut sep = false;
+  for i in cels {
+    if sep { out += ", "; } else { sep = true; }
+    out += &(loc_str(*i));
+  }
+  format!("<{}>", out)
 }
