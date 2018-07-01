@@ -241,3 +241,7 @@ pub fn locs_str(cels: &[u8]) -> String {
   }
   format!("<{}>", out)
 }
+
+pub fn pair_or_trip(n: usize) -> String {
+  format!("{}", match n { 2 => { "Pair" } 3 => { "Triplet" } _ => { "Error" } })
+}

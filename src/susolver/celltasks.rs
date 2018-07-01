@@ -1,6 +1,6 @@
 
 use std::collections::HashSet;
-use susolver::util::{loc_str, locs_str};
+use susolver::util::{loc_str, locs_str, pair_or_trip};
 
 pub enum SuElim {
   ELIM,
@@ -24,14 +24,14 @@ use susolver::celltasks::SuElim::*;
 use susolver::celltasks::SuRule::*;
 
 pub struct CellTask {
-  pub keep: Option<u8>,
-  pub keeps: HashSet<u8>,
-  pub elim: Option<u8>,
-  pub elims: HashSet<u8>,
-  pub keepval: Option<u8>,
-  pub keepvals: HashSet<u8>,
-  pub elimval: Option<u8>,
-  pub elimvals: HashSet<u8>,
+  pub keep_cell: Option<u8>,
+  pub keep_cells: HashSet<u8>,
+  pub elim_cell: Option<u8>,
+  pub elim_cells: HashSet<u8>,
+  pub keep_val: Option<u8>,
+  pub keep_vals: HashSet<u8>,
+  pub elim_val: Option<u8>,
+  pub elim_vals: HashSet<u8>,
   pub op: SuElim,
   pub rule: SuRule,
 }
@@ -39,14 +39,14 @@ pub struct CellTask {
 impl CellTask {
   pub fn new() -> CellTask {
     CellTask {
-      keep: None,
-      keeps: HashSet::new(),
-      elim: None,
-      elims: HashSet::new(),
-      keepval: None,
-      keepvals: HashSet::new(),
-      elimval: None,
-      elimvals: HashSet::new(),
+      keep_cell: None,
+      keep_cells: HashSet::new(),
+      elim_cell: None,
+      elim_cells: HashSet::new(),
+      keep_val: None,
+      keep_vals: HashSet::new(),
+      elim_val: None,
+      elim_vals: HashSet::new(),
       op: NOOP,
       rule: NORULE,
     }
@@ -58,74 +58,86 @@ impl CellTask {
     }
     self
   }
-  pub fn noop(&mut self) -> &mut Self {
+  pub fn is_elim(&self) -> bool {
+    match self.op {
+      ELIM => { true }
+      NOOP => { false }
+    }
+  }
+  pub fn op_noop(&mut self) -> &mut Self {
     match self.op {
       ELIM => { self.op = NOOP; }
       NOOP => {}
     }
     self
   }
-  pub fn keep_cell(&mut self, cel: u8) -> &mut Self {
-    self.keep = Some(cel);
+  pub fn is_noop(&self) -> bool {
+    match self.op {
+      ELIM => { false }
+      NOOP => { true }
+    }
+  }
+  pub fn set_keep_cell(&mut self, cel: u8) -> &mut Self {
+    self.keep_cell = Some(cel);
     self
   }
   pub fn clr_keep_cell(&mut self) -> &mut Self {
-    self.keep = None;
+    self.keep_cell = None;
     self
   }
-  pub fn elim_cell(&mut self, cel: u8) -> &mut Self {
-    self.elim = Some(cel);
+  pub fn set_elim_cell(&mut self, cel: u8) -> &mut Self {
+    self.elim_cell = Some(cel);
     self
   }
   pub fn clr_elim_cell(&mut self) -> &mut Self {
-    self.elim = None;
+    self.elim_cell = None;
     self
   }
-  pub fn keeps_push(&mut self, cel: u8) -> &mut Self {
-    self.keeps.insert(cel);
+  pub fn keep_cells_add(&mut self, cel: u8) -> &mut Self {
+    self.keep_cells.insert(cel);
     self
   }
-  pub fn keeps_push_all(&mut self, cells: &[u8]) -> &mut Self {
+  pub fn keep_cells_all(&mut self, cells: &[u8]) -> &mut Self {
     for cell in cells {
-      self.keeps.insert(*cell);
+      self.keep_cells.insert(*cell);
     }
     self
   }
-  pub fn elims_push(&mut self, cel: u8) -> &mut Self {
-    self.elims.insert(cel);
+  pub fn elim_cells_add(&mut self, cel: u8) -> &mut Self {
+    self.elim_cells.insert(cel);
     self
   }
-  pub fn elims_push_all(&mut self, cells: &[u8]) -> &mut Self {
+  pub fn elim_cells_all(&mut self, cells: &[u8]) -> &mut Self {
     for cell in cells {
-      self.elims.insert(*cell);
+      self.elim_cells.insert(*cell);
     }
     self
   }
-  pub fn set_keepval(&mut self, val: u8) -> &mut Self {
-    self.keepval = Some(val);
+  pub fn set_keep_val(&mut self, val: u8) -> &mut Self {
+    self.keep_val = Some(val);
     self
   }
-  pub fn set_elimval(&mut self, val: u8) -> &mut Self {
-    self.elimval = Some(val);
+  pub fn set_elim_val(&mut self, val: u8) -> &mut Self {
+    self.elim_val = Some(val);
     self
   }
-  pub fn keepvals_push(&mut self, val: u8) -> &mut Self {
-    self.keepvals.insert(val);
+  pub fn keep_vals_add(&mut self, val: u8) -> &mut Self {
+    self.keep_vals.insert(val);
     self
   }
-  pub fn elimvals_push(&mut self, val: u8) -> &mut Self {
-    self.elimvals.insert(val);
+  pub fn elim_vals_add(&mut self, val: u8) -> &mut Self {
+    self.elim_vals.insert(val);
     self
   }
-  pub fn keepvals_push_all(&mut self, vals: &[u8]) -> &mut Self {
+  pub fn keep_vals_all(&mut self, vals: &[u8]) -> &mut Self {
     for val in vals {
-      self.keepvals.insert(*val);
+      self.keep_vals.insert(*val);
     }
     self
   }
-  pub fn elimvals_push_all(&mut self, vals: &[u8]) -> &mut Self {
+  pub fn elim_vals_all(&mut self, vals: &[u8]) -> &mut Self {
     for val in vals {
-      self.elimvals.insert(*val);
+      self.elim_vals.insert(*val);
     }
     self
   }
@@ -134,24 +146,22 @@ impl CellTask {
     self
   }
   pub fn msg(&self) -> String {
-    if self.elimvals.is_empty() { return String::new() }
     match self.rule {
       SIMPLEELIM   => { format!("<{}>: drop {:?}", 
                           self.elim_str(), &self.elimvals_vec())}
       HIDDENSINGLE => { format!("hiddenSingle<{}={}>: drop {:?}", 
-                          self.elim_str(), self.keepval.unwrap(), &self.elimvals_vec()) }
+                          self.elim_str(), self.keep_val.unwrap(), &self.elimvals_vec()) }
       NAKEDGRP     => {
-        let pairtrip = match self.keeps.len() {
-          2 => { "Naked Pair" }
-          3 => { "Naked Triplet" }
-          _ => { "Naked Error" }
-        };
-        format!("{}{}: Eliminating {:?} from {}", 
-          pairtrip, locs_str(&self.keeps_vec()), 
-          self.elimvals, locs_str(&self.elims_vec()))
+        format!("Naked {}{}: Eliminating {:?} from {}", 
+          pair_or_trip(self.keep_cells.len()), locs_str(&self.keeps_vec()), 
+          self.elim_vals, locs_str(&self.elims_vec()))
       }
-      HIDDENGRP    => { format!("") }
-      POINTINGPAIR => { format!("") }
+      HIDDENGRP    => {
+        format!("Hidden {}{}{:?}: Eliminating other values.", 
+          pair_or_trip(self.elim_cells.len()), locs_str(&self.elims_vec()), self.keepvals_vec())
+      }
+      POINTINGPAIR => { format!("Pointing Pair{}: Eliminating {} from {}.",
+                          locs_str(&self.keeps_vec()), self.elim_val.unwrap(), locs_str(&self.elims_vec()) ) }
       BOXLINEREDUX => { format!("") }
       XWING        => { format!("") }
       SINGLESCHAIN => { format!("") }
@@ -161,34 +171,34 @@ impl CellTask {
   }
   pub fn keepvals_vec(&self) -> Vec<u8> {
     let mut out = vec![];
-    for i in 1..10_u8 { if self.keepvals.contains(&i) { out.push(i); } }
+    for i in 1..10_u8 { if self.keep_vals.contains(&i) { out.push(i); } }
     out
   }
   pub fn elimvals_vec(&self) -> Vec<u8> {
     let mut out = vec![];
-    for i in 1..10_u8 { if self.elimvals.contains(&i) { out.push(i); } }
+    for i in 1..10_u8 { if self.elim_vals.contains(&i) { out.push(i); } }
     out
   }
   pub fn keeps_vec(&self) -> Vec<u8> {
     let mut out = vec![];
-    for i in 1..82_u8 { if self.keeps.contains(&i) { out.push(i); } }
+    for i in 1..82_u8 { if self.keep_cells.contains(&i) { out.push(i); } }
     out
   }
   pub fn elims_vec(&self) -> Vec<u8> {
     let mut out = vec![];
-    for i in 1..82_u8 { if self.elims.contains(&i) { out.push(i); } }
+    for i in 1..82_u8 { if self.elim_cells.contains(&i) { out.push(i); } }
     out
   }
   fn keep_str(&self) -> String {
-    if self.keep.is_none() { return String::new() }
-    loc_str(self.keep.unwrap())
+    if self.keep_cell.is_none() { return String::new() }
+    loc_str(self.keep_cell.unwrap())
   }
   fn elim_str(&self) -> String {
-    if self.elim.is_none() { return String::new() }
-    loc_str(self.elim.unwrap())
+    if self.elim_cell.is_none() { return String::new() }
+    loc_str(self.elim_cell.unwrap())
   }
   fn keeps_str(&self) -> String {
-    if self.keeps.is_empty() { return String::new() }
+    if self.keep_cells.is_empty() { return String::new() }
     let cels: Vec<u8> = self.keeps_vec();
     let mut out = String::new();
     for pos in cels {
@@ -201,7 +211,7 @@ impl CellTask {
     out
   }
   fn elims_str(&self) -> String {
-    if self.elims.is_empty() { return String::new() }
+    if self.elim_cells.is_empty() { return String::new() }
     let cels: Vec<u8> = self.elims_vec();
     let mut out = String::new();
     for pos in cels {
@@ -237,9 +247,11 @@ impl CellTasks {
     return &mut self.tasks[pos]
   }
   pub fn pop_noop(&mut self) {
-    match self.tasks[self.tasks.len() - 1].op {
-      NOOP => { self.tasks.pop(); }
-      _ => {}
+    if self.has_tasks() {
+      match self.tasks[self.tasks.len() - 1].op {
+        NOOP => { self.tasks.pop(); }
+        _ => {}
+      }
     }
   }
 }

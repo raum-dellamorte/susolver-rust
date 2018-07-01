@@ -82,11 +82,12 @@ impl SuCell {
     out
   }
   
-  pub fn checkSolve(&mut self) {
+  pub fn checkSolve(&mut self) -> String {
     if self.pmsolved() {
       self.val = self.pmarksVec()[0];
-      println!("Cell {} solved as {}", self.locS(), self.val);
+      return format!("Cell {} solved as {}", self.locS(), self.val)
     }
+    format!("Cell {} not yet solved", self.locS())
   }
   
   pub fn elimVal(&mut self, n: u8) {
