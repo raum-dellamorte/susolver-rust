@@ -148,80 +148,71 @@ impl CellTask {
   pub fn msg(&self) -> String {
     match self.rule {
       SIMPLEELIM   => { format!("<{}>: drop {:?}", 
-                          self.elim_str(), &self.elimvals_vec())}
+                          self.elim_cell_str(), &self.elim_vals_vec())}
       HIDDENSINGLE => { format!("hiddenSingle<{}={}>: drop {:?}", 
-                          self.elim_str(), self.keep_val.unwrap(), &self.elimvals_vec()) }
+                          self.elim_cell_str(), self.keep_val_str(), &self.elim_vals_vec()) }
       NAKEDGRP     => {
         format!("Naked {}{}: Eliminating {:?} from {}", 
-          pair_or_trip(self.keep_cells.len()), locs_str(&self.keeps_vec()), 
-          self.elim_vals, locs_str(&self.elims_vec()))
+          pair_or_trip(self.keep_cells.len()), self.keep_cells_str(), 
+          self.elim_vals, self.elim_cells_str())
       }
       HIDDENGRP    => {
         format!("Hidden {}{}{:?}: Eliminating other values.", 
-          pair_or_trip(self.elim_cells.len()), locs_str(&self.elims_vec()), self.keepvals_vec())
+          pair_or_trip(self.elim_cells.len()), self.elim_cells_str(), self.keep_vals_vec())
       }
       POINTINGPAIR => { format!("Pointing Pair{}: Eliminating {} from {}.",
-                          locs_str(&self.keeps_vec()), self.elim_val.unwrap(), locs_str(&self.elims_vec()) ) }
-      BOXLINEREDUX => { format!("") }
+                          self.keep_cells_str(), self.elim_val_str(), self.elim_cells_str() ) }
+      BOXLINEREDUX => { format!("Box Line Reduction{}: Eliminating {:?} from {}.",
+                          self.keep_cells_str(), self.elim_vals, self.elim_cells_str() ) }
       XWING        => { format!("") }
       SINGLESCHAIN => { format!("") }
       YWING        => { format!("") }
       NORULE => String::new()
     }
   }
-  pub fn keepvals_vec(&self) -> Vec<u8> {
-    let mut out = vec![];
-    for i in 1..10_u8 { if self.keep_vals.contains(&i) { out.push(i); } }
-    out
-  }
-  pub fn elimvals_vec(&self) -> Vec<u8> {
-    let mut out = vec![];
-    for i in 1..10_u8 { if self.elim_vals.contains(&i) { out.push(i); } }
-    out
-  }
-  pub fn keeps_vec(&self) -> Vec<u8> {
+  pub fn keep_cells_vec(&self) -> Vec<u8> {
     let mut out = vec![];
     for i in 1..82_u8 { if self.keep_cells.contains(&i) { out.push(i); } }
     out
   }
-  pub fn elims_vec(&self) -> Vec<u8> {
+  pub fn elim_cells_vec(&self) -> Vec<u8> {
     let mut out = vec![];
     for i in 1..82_u8 { if self.elim_cells.contains(&i) { out.push(i); } }
     out
   }
-  fn keep_str(&self) -> String {
+  pub fn keep_vals_vec(&self) -> Vec<u8> {
+    let mut out = vec![];
+    for i in 1..10_u8 { if self.keep_vals.contains(&i) { out.push(i); } }
+    out
+  }
+  pub fn elim_vals_vec(&self) -> Vec<u8> {
+    let mut out = vec![];
+    for i in 1..10_u8 { if self.elim_vals.contains(&i) { out.push(i); } }
+    out
+  }
+  fn keep_cell_str(&self) -> String {
     if self.keep_cell.is_none() { return String::new() }
     loc_str(self.keep_cell.unwrap())
   }
-  fn elim_str(&self) -> String {
+  fn keep_cells_str(&self) -> String {
+    if self.keep_cells.is_empty() { return format!("<>") }
+    locs_str(&self.keep_cells_vec())
+  }
+  fn elim_cell_str(&self) -> String {
     if self.elim_cell.is_none() { return String::new() }
     loc_str(self.elim_cell.unwrap())
   }
-  fn keeps_str(&self) -> String {
-    if self.keep_cells.is_empty() { return String::new() }
-    let cels: Vec<u8> = self.keeps_vec();
-    let mut out = String::new();
-    for pos in cels {
-      if out.is_empty() {
-        out = format!("{}", loc_str(pos))
-      } else {
-        out = format!("{}, {}", out, loc_str(pos))
-      }
-    }
-    out
+  fn elim_cells_str(&self) -> String {
+    if self.elim_cells.is_empty() { return format!("<>") }
+    locs_str(&self.elim_cells_vec())
   }
-  fn elims_str(&self) -> String {
-    if self.elim_cells.is_empty() { return String::new() }
-    let cels: Vec<u8> = self.elims_vec();
-    let mut out = String::new();
-    for pos in cels {
-      if out.is_empty() {
-        out = format!("{}", loc_str(pos))
-      } else {
-        out = format!("{}, {}", out, loc_str(pos))
-      }
-    }
-    out
+  fn keep_val_str(&self) -> String {
+    if self.keep_val.is_none() { return String::new() }
+    format!("{}", self.keep_val.unwrap())
+  }
+  fn elim_val_str(&self) -> String {
+    if self.elim_val.is_none() { return String::new() }
+    format!("{}", self.elim_val.unwrap())
   }
 }
 

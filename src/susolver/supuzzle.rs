@@ -313,7 +313,7 @@ impl SuPuzzle {
       print!(" | Running pointingPairs");
       if self.proc_tasks(self.pointingPairs()) { continue; }
       print!(" | Running boxLineReduction");
-      if self.boxLineReduction() { continue; }
+      if self.proc_tasks(self.boxLineReduction()) { continue; }
       print!(" | Running xwings");
       if self.xwings() { continue; }
       print!(" | Running simpleColouring");
@@ -335,12 +335,12 @@ impl SuPuzzle {
           match task.rule {
             SIMPLEELIM | HIDDENSINGLE => {
               if let Some(pos) = task.elim_cell {
-                self.cell_mut(pos).elimVals(&task.elimvals_vec());
+                self.cell_mut(pos).elimVals(&task.elim_vals_vec());
               }
             }
-            NAKEDGRP | HIDDENGRP => {
+            NAKEDGRP | HIDDENGRP | BOXLINEREDUX => {
               for pos in &task.elim_cells {
-                self.cell_mut(*pos).elimVals(&task.elimvals_vec());
+                self.cell_mut(*pos).elimVals(&task.elim_vals_vec());
               }
             }
             POINTINGPAIR => {
@@ -513,19 +513,19 @@ impl SuPuzzle {
             // Found pointing pair if remaining pmark exists in a cell in the same row or col but outside the current block
             let pmk: Vec<u8> = diff.into_iter().collect();
             let pmk: u8 = pmk[0];
-            let grp_a = keep(&grp_a, |i| self.cell(i).canBe(pmk) );
+            let grp_keep = keep(&grp_a, |i| self.cell(i).canBe(pmk) );
             let grp_elim = {
               let cels: Vec<u8> = (1_u8..82_u8).into_iter().collect();
               let tgrp_elim = match rc {
                 0 => {
-                  let rn = self.cell(grp_a[0]).row();
+                  let rn = self.cell(grp_keep[0]).row();
                   keep(&cels, |i| match self.cell(i) {
                     tcel if (tcel.block() != bn) && (tcel.row() == rn) => { true }
                     _ => { false }
                   })
                 }
                 _ => {
-                  let cn = self.cell(grp_a[0]).col();
+                  let cn = self.cell(grp_keep[0]).col();
                   keep(&cels, |i| match self.cell(i) {
                     tcel if (tcel.block() != bn) && (tcel.col() == cn) => { true }
                     _ => { false }
@@ -539,7 +539,12 @@ impl SuPuzzle {
             };
             if !grp_elim.is_empty() {
               // Found pointing pair eliminations!
-              out.new_task().set_rule(POINTINGPAIR).op_elim().keep_cells_all(&grp_a).elim_cells_all(&grp_elim).set_elim_val(pmk);
+              out.new_task()
+                .set_rule(POINTINGPAIR)
+                .op_elim()
+                .keep_cells_all(&grp_keep)
+                .elim_cells_all(&grp_elim)
+                .set_elim_val(pmk);
             }
           }
         }
@@ -547,8 +552,8 @@ impl SuPuzzle {
     }
     out
   }
-  pub fn boxLineReduction(&mut self) -> bool { // (&self) -> CellTasks {
-    //let mut out = CellTasks::new();
+  pub fn boxLineReduction(&self) -> CellTasks {
+    let mut out = CellTasks::new();
     for rcn in (1_u8)..(10_u8) {
       for rc in 0..2 {
         let trc = match rc {
@@ -560,22 +565,21 @@ impl SuPuzzle {
             0 => { 1 }
             _ => { 0 }
           };
-          let grp_a = keep(&trc, |i| self.cell(i).block3(cr) == grp_n ); 
+          let grp_keep = keep(&trc, |i| self.cell(i).block3(cr) == grp_n ); 
           let grp_b = keep(&trc, |i| self.cell(i).block3(cr) != grp_n );
-          let pmx_a = self.pmarksAll(&grp_a);
+          let pmx_a = self.pmarksAll(&grp_keep);
           let pmx_b = self.pmarksAll(&grp_b);
           let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
           if !diff.is_empty() {
             // Found box line reduction if remaining pmarks exist in a cell in the same block but not the current row/col
             let pmks: Vec<u8> = diff.clone().into_iter().collect();
-            let bn = self.cell(grp_a[0]).block();
+            let bn = self.cell(grp_keep[0]).block();
             let grp_elim = {
               let b = self.block(bn);
               let tgrp_elim = match rc {
-                0 => { let t = self.cell(grp_a[0]).brow(); keep(&b, |i| self.cell(i).brow() != t ) }
-                _ => { let t = self.cell(grp_a[0]).bcol(); keep(&b, |i| self.cell(i).bcol() != t ) }
+                0 => { let t = self.cell(grp_keep[0]).brow(); keep(&b, |i| self.cell(i).brow() != t ) }
+                _ => { let t = self.cell(grp_keep[0]).bcol(); keep(&b, |i| self.cell(i).bcol() != t ) }
               };
-              //println!("Block {}: {}", bn, self.cellsS(&tgrp_elim));
               keep(&tgrp_elim, |i| {
                 let isect: Vec<u8> = self.cell(i).pmarksSet().intersection(&diff).cloned().collect();
                 !isect.is_empty()
@@ -583,19 +587,18 @@ impl SuPuzzle {
             };
             if !grp_elim.is_empty() {
               // Found box line reduction eliminations!
-              print!("\nBox Line Reduction{}: Eliminating {:?} from {}.", 
-                self.cellsS(&grp_a), &pmks, self.cellsS(&grp_elim));
-              for fcn in &grp_elim {
-                let fcel = self.cell_mut(*fcn);
-                fcel.elimVals(&pmks);
-              }
-              return true;
+              out.new_task()
+                .set_rule(BOXLINEREDUX)
+                .op_elim()
+                .keep_cells_all(&grp_keep)
+                .elim_cells_all(&grp_elim)
+                .elim_vals_all(&pmks);
             }
           }
         }
       }
     }
-    false
+    out
   }
   pub fn xwings(&mut self) -> bool { // (&self) -> CellTasks {
     //let mut out = CellTasks::new();
