@@ -13,5 +13,5 @@ fn main() {
   //   println!("cell: {}, block: {}, brow: {}, bcol: {}", (*c).pos, (*c).block(), (*c).brow(), (*c).bcol());
   // }
   puz.solve();
-  println!("Puzzle : \n{}", puz.puzStringWithPMarks());
+  println!("Puzzle : \n{}", puz.puz_str_with_pmarks());
 }

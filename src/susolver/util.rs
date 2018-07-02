@@ -153,7 +153,7 @@ pub fn grp9(n: u8) -> u8 {
   grp(n, 9_u8)
 }
 
-pub fn plistRemainder(se: &HashSet<u8>) -> Vec<u8> {
+pub fn plist_remainder(se: &HashSet<u8>) -> Vec<u8> {
   let mut out: Vec<u8> = Vec::new();
   for n in (1_u8)..(10_u8) {
     if !((*se).contains(&n)) { out.push(n); }
@@ -161,7 +161,7 @@ pub fn plistRemainder(se: &HashSet<u8>) -> Vec<u8> {
   out
 }
 
-pub fn plistSetToVec(se: &HashSet<u8>) -> Vec<u8> {
+pub fn plist_set_to_vec(se: &HashSet<u8>) -> Vec<u8> {
   let mut out: Vec<u8> = Vec::new();
   for n in (1_u8)..(10_u8) {
     if (*se).contains(&n) { out.push(n); }
@@ -193,7 +193,7 @@ pub fn col(pos: u8) -> u8 {
   mod9(pos)
 }
 
-pub fn colS(pos: u8) -> char {
+pub fn col_str(pos: u8) -> char {
   (48_u8 + col(pos)) as char
 }
 
@@ -201,7 +201,7 @@ pub fn row(pos: u8) -> u8 {
   grp9(pos)
 }
 
-pub fn rowS(pos: u8) -> char {
+pub fn row_str(pos: u8) -> char {
   (64_u8 + row(pos)) as char
 }
 
@@ -229,7 +229,7 @@ pub fn brc(pos: u8) -> (u8, u8, u8) {
 }
 
 pub fn loc_str(pos: u8) -> String {
-  format!("{}{}", rowS(pos), colS(pos))
+  format!("{}{}", row_str(pos), col_str(pos))
 }
 
 pub fn locs_str(cels: &[u8]) -> String {

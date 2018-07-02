@@ -51,10 +51,10 @@ pub struct Chain<'a> {
 
 impl<'a> Chain<'a> {
   pub fn new(puz: &'a SuPuzzle, val: u8) -> Self {
-    let test = puz.unsolvedCells();
+    let test = puz.unsolved_cells();
     let mut links: Vec<ChainLink> = Vec::new();
     for tcn in test.clone() {
-      match puz.binaryCandsAnyGroup(tcn, val) {
+      match puz.binary_cands_any_group(tcn, val) {
         None => { continue; }
         Some(x) => {
           links.push(ChainLink { 

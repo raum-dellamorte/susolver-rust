@@ -7,7 +7,7 @@ use std::path::Path;
 use std::collections::HashSet;
 //use std::thread;
 
-use susolver::util::{all_true, c, keep, Permuter, plistRemainder, plistSetToVec, vecrange};
+use susolver::util::{all_true, c, keep, Permuter, plist_remainder, plist_set_to_vec, vecrange};
 use susolver::sucell::SuCell;
 use susolver::chains::Chain; //, ChainLink};
 use susolver::BRC;
@@ -66,7 +66,7 @@ impl SuPuzzle {
     }
     out + ">"
   }
-  pub fn puzString(&self) -> String {
+  pub fn puz_str(&self) -> String {
     let mut out = String::new();
     for i in 0..81 {
       let cel = self.cells[i];
@@ -83,7 +83,7 @@ impl SuPuzzle {
     }
     out
   }
-  pub fn puzStringWithPMarks(&self) -> String {
+  pub fn puz_str_with_pmarks(&self) -> String {
     let mut out = String::new();
     for rc in 0..9 {
       for pm in 0..3 {
@@ -121,7 +121,7 @@ impl SuPuzzle {
     }
     out
   }
-  pub fn pmarksAll(&self, cels: &[u8]) -> HashSet<u8> {
+  pub fn pmarks_all(&self, cels: &[u8]) -> HashSet<u8> {
     let mut out: HashSet<u8> = HashSet::new();
     for cn in (*cels).iter() {
       let cel = self.cell(*cn);
@@ -130,7 +130,7 @@ impl SuPuzzle {
     }
     out
   }
-  fn sumExcept(&self, cels: &[u8], except: &HashSet<u8>) -> HashSet<u8> {
+  fn sum_except(&self, cels: &[u8], except: &HashSet<u8>) -> HashSet<u8> {
     let mut out: HashSet<u8> = HashSet::new();
     for celn in (*cels).iter() {
       if except.contains(celn) { continue; }
@@ -199,7 +199,7 @@ impl SuPuzzle {
       (ln > 1) && (ln < 4)
     })
   }
-  fn pmarksUnion(&self, cels: &[u8]) -> HashSet<u8> {
+  fn pmarks_union(&self, cels: &[u8]) -> HashSet<u8> {
     let mut out = HashSet::new();
     for cel in cels {
       let tmp = self.cell(*cel).pmarks_set();
@@ -207,7 +207,7 @@ impl SuPuzzle {
     }
     out
   }
-  fn inSameGroup(&self, cels: &[u8]) -> bool {
+  fn in_same_group(&self, cels: &[u8]) -> bool {
     let mut btest: HashSet<u8> = HashSet::new();
     let mut rtest: HashSet<u8> = HashSet::new();
     let mut ctest: HashSet<u8> = HashSet::new();
@@ -219,64 +219,64 @@ impl SuPuzzle {
     }
     btest.len() == 1 || rtest.len() == 1 || ctest.len() == 1
   }
-  fn sameGroupContains(&self, cel: u8, val: u8, grp: &BRC) -> Vec<u8> {
+  fn same_group_contains(&self, cel: u8, val: u8, grp: &BRC) -> Vec<u8> {
     let acel = self.cell(cel);
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
       let bcel = self.cell(i);
       i != cel && !bcel.solved() && bcel.pmarks_set().contains(&val) && acel.same_group(bcel, grp)
     })
   }
-  fn canSeeAll(&self, tcel: u8, cels: &[u8]) -> bool {
+  fn can_see_all(&self, tcel: u8, cels: &[u8]) -> bool {
     all_true(cels, |i| self.cell(i).can_see(self.cell(tcel)) )
   }
-  fn connectedAll(&self, cels: &[u8]) -> Vec<u8> {
-    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| self.canSeeAll(i, cels) )
+  fn connected_all(&self, cels: &[u8]) -> Vec<u8> {
+    keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| self.can_see_all(i, cels) )
   }
-  fn connectedAllUnsolved(&self, cels: &[u8]) -> Vec<u8> {
+  fn connected_all_unsolved(&self, cels: &[u8]) -> Vec<u8> {
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
       let tcel = self.cell(i);
-      !tcel.solved() && self.canSeeAll(tcel.pos, cels)
+      !tcel.solved() && self.can_see_all(tcel.pos, cels)
     })
   }
-  fn connectedCells(&self, cel: &SuCell) -> Vec<u8> {
+  fn connected_cells(&self, cel: &SuCell) -> Vec<u8> {
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
       let tcel = self.cell(i);
       cel.can_see(tcel)
     })
   }
-  fn connectedSolved(&self, cel: &SuCell) -> Vec<u8> {
+  fn connected_solved(&self, cel: &SuCell) -> Vec<u8> {
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
       let tcel = self.cell(i);
       tcel.solved() && cel.can_see(tcel)
     })
   }
-  fn connectedUnsolved(&self, cel: &SuCell) -> Vec<u8> {
+  fn connected_unsolved(&self, cel: &SuCell) -> Vec<u8> {
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| {
       let tcel = self.cell(i);
       !tcel.solved() && cel.can_see(tcel)
     })
   }
-  fn solvedCells(&self) -> Vec<u8> {
+  fn solved_cells(&self) -> Vec<u8> {
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| self.cell(i).solved() )
   }
-  pub fn unsolvedCells(&self) -> Vec<u8> {
+  pub fn unsolved_cells(&self) -> Vec<u8> {
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| !self.cell(i).solved() )
   }
-  pub fn pmsolvedCells(&self) -> Vec<u8> {
+  pub fn pmsolved_cells(&self) -> Vec<u8> {
     keep(&((1..82_u8).into_iter().collect::<Vec<u8>>()), |i| self.cell(i).pmsolved() )
   }
-  fn binaryCand(&self, cel: u8, val: u8, grp: &BRC) -> Option<u8> {
-    match &self.sameGroupContains(cel, val, grp) {
+  fn binary_cand(&self, cel: u8, val: u8, grp: &BRC) -> Option<u8> {
+    match &self.same_group_contains(cel, val, grp) {
       x if x.len() == 1 => { Some(x[0]) }
       _ => { None }
     }
   }
-  pub fn binaryCandsAnyGroup(&self, cel: u8, val: u8) -> Option<Vec<Option<u8>>> {
+  pub fn binary_cands_any_group(&self, cel: u8, val: u8) -> Option<Vec<Option<u8>>> {
     if !self.cell(cel).pmarks_set().contains(&val) { return None }
     let mut nbrs: Vec<Option<u8>> = Vec::new();
     let mut test = 0;
     for grp in vec!(BLK, ROW, COL) {
-      match self.binaryCand(cel, val, &grp) { 
+      match self.binary_cand(cel, val, &grp) { 
         Some(x) => {
           test += 1;
           if nbrs.len() > 0 { if let Some(n) = nbrs[0] { if n == x {
@@ -292,7 +292,7 @@ impl SuPuzzle {
     Some(nbrs)
   }
   fn check_cells(&mut self) {
-    let solved = self.pmsolvedCells();
+    let solved = self.pmsolved_cells();
     if solved.len() > 0 {
       let mut i = 0;
       for c in solved {
@@ -303,25 +303,25 @@ impl SuPuzzle {
   pub fn solve(&mut self) {
     loop {
       self.check_cells();
-      if self.solvedCells().len() == 81 { break; }
+      if self.solved_cells().len() == 81 { break; }
       print!("\nRunning simpleElim");
-      if self.proc_tasks(self.simpleElim() as CellTasks) { continue; } else { print!(" | "); }
+      if self.proc_tasks(self.simple_elim() as CellTasks) { continue; } else { print!(" | "); }
       print!("Running hiddenSingle");
-      if self.proc_tasks(self.hiddenSingle()) { continue; }
+      if self.proc_tasks(self.hidden_single()) { continue; }
       print!(" | Running nakedPairsTrips");
-      if self.proc_tasks(self.nakedPairsTrips()) { continue; }
+      if self.proc_tasks(self.naked_pairs_trips()) { continue; }
       print!(" | Running hiddenPairsTrips");
-      if self.proc_tasks(self.hiddenPairsTrips()) { continue; }
+      if self.proc_tasks(self.hidden_pairs_trips()) { continue; }
       print!(" | Running pointingPairs");
-      if self.proc_tasks(self.pointingPairs()) { continue; }
+      if self.proc_tasks(self.pointing_pairs()) { continue; }
       print!(" | Running boxLineReduction");
-      if self.proc_tasks(self.boxLineReduction()) { continue; }
+      if self.proc_tasks(self.box_line_redux()) { continue; }
       print!(" | Running xwings");
       if self.proc_tasks(self.xwings()) { continue; }
-      print!(" | Running simpleColouring");
-      if self.singles_chains() { continue; }
+      print!(" | Running singles_chains");
+      if self.proc_tasks(self.singles_chains()) { continue; }
       print!(" | Running ywings");
-      if self.ywings() { continue; }
+      if self.proc_tasks(self.ywings()) { continue; }
       print!(" | ");
       break
     }
@@ -364,12 +364,12 @@ impl SuPuzzle {
     print!("\n");
     true
   }
-  pub fn simpleElim(&self) -> CellTasks {
+  pub fn simple_elim(&self) -> CellTasks {
     let mut out = CellTasks::new();
-    let test = self.unsolvedCells();
+    let test = self.unsolved_cells();
     for cp in &test {
       let task = out.new_task().set_rule(SimpleElim).set_elim_cell(*cp);
-      let tmp = self.connectedSolved(self.cell(*cp));
+      let tmp = self.connected_solved(self.cell(*cp));
       for tpos in &tmp {
         let tval = self.cell(*tpos).val;
         if self.cell(*cp).can_be(tval) { task.op_elim().elim_vals_add(tval); }
@@ -378,15 +378,15 @@ impl SuPuzzle {
     }
     out
   }
-  pub fn hiddenSingle(&self) -> CellTasks {
-    let test = self.unsolvedCells();
+  pub fn hidden_single(&self) -> CellTasks {
+    let test = self.unsolved_cells();
     let mut out = CellTasks::new();
     for cp in &test {
       let task = out.new_task().set_rule(HiddenSingle).set_elim_cell(*cp);
       let pmarx = self.cell(*cp).pmarks;
       for cand in 0..9 {
         if !pmarx[cand] {continue;}
-        let tmp = self.connectedUnsolved(self.cell(*cp));
+        let tmp = self.connected_unsolved(self.cell(*cp));
         let (mut cntc, mut cntr, mut cntb) = (0, 0, 0);
         for tpos in &tmp {
           let tpmarx = self.cell(*tpos).pmarks;
@@ -413,7 +413,7 @@ impl SuPuzzle {
     }
     out
   }
-  fn fixNakedPairsTrips(&self, task: &mut CellTask, mut toFix: Vec<u8>, fvals: Vec<u8>) {
+  fn fix_naked_pairs_trips(&self, task: &mut CellTask, mut toFix: Vec<u8>, fvals: Vec<u8>) {
     toFix.retain(|x| self.cell(*x).can_be_any(&fvals) ); // If there's nothing to fix, don't fix it.
     if !toFix.is_empty() {
       // Found Naked Pair or Trip!
@@ -424,33 +424,33 @@ impl SuPuzzle {
       }
     }
   }
-  pub fn nakedPairsTrips(&self) -> CellTasks {
+  pub fn naked_pairs_trips(&self) -> CellTasks {
     let mut out = CellTasks::new();
     let test = self.pmarks2or3();
     for cels in Permuter::new(2, test.clone()).add_length(3) {
-      if !self.inSameGroup(&cels) { continue; }
+      if !self.in_same_group(&cels) { continue; }
       let task = out.new_task().set_rule(NakedGrp).keep_cells_all(&cels);
-      let pmu = self.pmarksUnion(&cels);
+      let pmu = self.pmarks_union(&cels);
       if pmu.len() == cels.len() {
-        let toFix = self.connectedAllUnsolved(&cels);
-        self.fixNakedPairsTrips(task, toFix, pmu.into_iter().collect()); // if * { return true; } else { continue; }
+        let toFix = self.connected_all_unsolved(&cels);
+        self.fix_naked_pairs_trips(task, toFix, pmu.into_iter().collect()); // if * { return true; } else { continue; }
       }
       out.pop_noop();
     }
     out
   }
-  fn hpCands(&self, c1p: u8, c2p: u8) -> bool {
+  fn hp_cands(&self, c1p: u8, c2p: u8) -> bool {
     let c1 = self.cell(c1p);
     let c2 = self.cell(c2p);
     ((c1.pmarks_set()).union(&(c2.pmarks_set())).cloned().collect::<HashSet<u8>>()).len() > 2
   }
-  fn htCands(&self, c1p: u8, c2p: u8, c3p: u8) -> bool {
+  fn ht_cands(&self, c1p: u8, c2p: u8, c3p: u8) -> bool {
     let c1 = self.cell(c1p);
     let c2 = self.cell(c2p);
     let c3 = self.cell(c3p);
     ((c1.pmarks_set()).union(&(c2.pmarks_set())).cloned().collect::<HashSet<u8>>().union(&(c3.pmarks_set())).cloned().collect::<HashSet<u8>>()).len() > 3
   }
-  pub fn hiddenPairsTrips(&self) -> CellTasks {
+  pub fn hidden_pairs_trips(&self) -> CellTasks {
     let mut out = CellTasks::new();
     for brc in 0..3 {
       for brcn in (1_u8)..(10_u8) {
@@ -464,36 +464,36 @@ impl SuPuzzle {
           if self.cell(cel1p).solved() { continue; }
           for c2 in (c1 + 1)..9 {
             let cel2p = tgrp[c2];
-            if self.cell(cel2p).solved() || !(self.hpCands(cel1p, cel2p)) { continue; }
+            if self.cell(cel2p).solved() || !(self.hp_cands(cel1p, cel2p)) { continue; }
             out.pop_noop();
             let task = out.new_task().set_rule(HiddenGrp).elim_cells_add(cel1p).elim_cells_add(cel2p);
             {
               let mut testPair: HashSet<u8> = HashSet::new();
               testPair.insert(cel1p);
               testPair.insert(cel2p);
-              let se = self.sumExcept(&tgrp, &testPair);
+              let se = self.sum_except(&tgrp, &testPair);
               if se.len() == 7 {
                 // Hidden Pair Found!
                 task.op_elim()
-                    .keep_vals_all(&plistRemainder(&se))
-                    .elim_vals_all(&plistSetToVec(&se));
+                    .keep_vals_all(&plist_remainder(&se))
+                    .elim_vals_all(&plist_set_to_vec(&se));
               }
             }
             if (c1 < 1) || task.is_elim() { continue; }
             for c3 in 0..(c1 + 1) {
               let cel3p = tgrp[c3];
-              if self.cell(cel3p).solved() || !(self.htCands(cel1p, cel2p, cel3p)) { continue; }
+              if self.cell(cel3p).solved() || !(self.ht_cands(cel1p, cel2p, cel3p)) { continue; }
               task.elim_cells_add(cel3p);
               let mut testTrip: HashSet<u8> = HashSet::new();
               testTrip.insert(cel1p);
               testTrip.insert(cel2p);
               testTrip.insert(cel3p);
-              let se = self.sumExcept(&tgrp, &testTrip);
+              let se = self.sum_except(&tgrp, &testTrip);
               if se.len() == 6 {
                 // Hidden Triplet Found!
                 task.op_elim()
-                    .keep_vals_all(&plistRemainder(&se))
-                    .elim_vals_all(&plistSetToVec(&se));
+                    .keep_vals_all(&plist_remainder(&se))
+                    .elim_vals_all(&plist_set_to_vec(&se));
               }
             }
           }
@@ -503,7 +503,7 @@ impl SuPuzzle {
     out.pop_noop();
     out
   }
-  pub fn pointingPairs(&self) -> CellTasks {
+  pub fn pointing_pairs(&self) -> CellTasks {
     let mut out = CellTasks::new();
     for bn in (1_u8)..(10_u8) {
       let b = self.block(bn);
@@ -513,8 +513,8 @@ impl SuPuzzle {
             0 => { (keep(&b, |i| self.cell(i).brow() == rcn ), keep(&b, |i| self.cell(i).brow() != rcn )) }
             _ => { (keep(&b, |i| self.cell(i).bcol() == rcn ), keep(&b, |i| self.cell(i).bcol() != rcn )) }
           };
-          let pmx_a = self.pmarksAll(&grp_a);
-          let pmx_b = self.pmarksAll(&grp_b);
+          let pmx_a = self.pmarks_all(&grp_a);
+          let pmx_b = self.pmarks_all(&grp_b);
           let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
           if diff.len() == 1 {
             // Found pointing pair if remaining pmark exists in a cell in the same row or col but outside the current block
@@ -559,7 +559,7 @@ impl SuPuzzle {
     }
     out
   }
-  pub fn boxLineReduction(&self) -> CellTasks {
+  pub fn box_line_redux(&self) -> CellTasks {
     let mut out = CellTasks::new();
     for rcn in (1_u8)..(10_u8) {
       for rc in 0..2 {
@@ -574,8 +574,8 @@ impl SuPuzzle {
           };
           let grp_keep = keep(&trc, |i| self.cell(i).block3(cr) == grp_n ); 
           let grp_b = keep(&trc, |i| self.cell(i).block3(cr) != grp_n );
-          let pmx_a = self.pmarksAll(&grp_keep);
-          let pmx_b = self.pmarksAll(&grp_b);
+          let pmx_a = self.pmarks_all(&grp_keep);
+          let pmx_b = self.pmarks_all(&grp_b);
           let diff: HashSet<u8> = pmx_a.difference(&pmx_b).cloned().collect();
           if !diff.is_empty() {
             // Found box line reduction if remaining pmarks exist in a cell in the same block but not the current row/col
@@ -609,7 +609,7 @@ impl SuPuzzle {
   }
   pub fn xwings(&self) -> CellTasks {
     let mut out = CellTasks::new();
-    let test = self.unsolvedCells();
+    let test = self.unsolved_cells();
     for grp_keep in Permuter::new(4, test.clone()) {
       if self.cell(grp_keep[0]).row() != self.cell(grp_keep[1]).row() ||
          self.cell(grp_keep[0]).col() != self.cell(grp_keep[2]).col() ||
@@ -626,10 +626,10 @@ impl SuPuzzle {
       let col = keep(&[&self.col(self.cell(grp_keep[0]).col())[..], &self.col(self.cell(grp_keep[1]).col())[..]].concat(),
                       |tc| !self.cell(tc).solved() && !grp_keep.clone().into_iter().collect::<HashSet<u8>>().contains(&tc) );
       for elim_val in pmi.clone() {
-        let grp_elim = if self.pmarksUnion(&row).contains(&elim_val) && !self.pmarksUnion(&col).contains(&elim_val) {
+        let grp_elim = if self.pmarks_union(&row).contains(&elim_val) && !self.pmarks_union(&col).contains(&elim_val) {
           // X-Wing found with row eliminations
           keep(&row, |tc| self.cell(tc).pmarks_set().contains(&elim_val) )
-        } else if !self.pmarksUnion(&row).contains(&elim_val) && self.pmarksUnion(&col).contains(&elim_val) {
+        } else if !self.pmarks_union(&row).contains(&elim_val) && self.pmarks_union(&col).contains(&elim_val) {
           // X-Wing found with col eliminations
           keep(&col, |tc| self.cell(tc).pmarks_set().contains(&elim_val) )
         } else {
@@ -650,8 +650,8 @@ impl SuPuzzle {
     out
   }
   
-  pub fn singles_chains(&mut self) -> bool { // (&self) -> CellTasks {
-    //let mut out = CellTasks::new();
+  pub fn singles_chains(&self) -> CellTasks {
+    let mut out = CellTasks::new();
     let tpuz = &self.clone();
     for elim_val in 1..10_u8 {
       let mut chain = Chain::new(tpuz, elim_val);
@@ -663,14 +663,12 @@ impl SuPuzzle {
         if let Some(grp_elim_cl) = scsg {
           // Found simple colouring Same Group Same Colour eliminations
           let grp_elim: Vec<u8> = grp_elim_cl.iter().map(|x| x.cel ).collect();
-          //println!("Puzzle : \n{}", self.puzStringWithPMarks());
-          print!("\nSimple Colouring by Colour Conflict: Eliminating {} from {}.", 
-                    elim_val, self.cells_str(&grp_elim));
-          for fcn in &grp_elim {
-            let fcel = self.cell_mut(*fcn);
-            fcel.elim_val(elim_val);
-          }
-          return true;
+          out.new_task()
+            .set_rule(SinglesChainCC)
+            .op_elim()
+            .elim_cells_all(&grp_elim)
+            .set_elim_val(elim_val);
+          break;
         }
         let tchain = chain.chain_colour_set();
         let ends = &chain.chain_ends();
@@ -681,21 +679,21 @@ impl SuPuzzle {
             let c1 = ends[cels[0]].colour;
             let c2 = ends[cels[1]].colour;
             if c1 != c2 {
-              let endsi: Vec<u8> = ends.into_iter().map(|x| x.cel ).collect();
-              let grp_elim = self.connectedAll(&endsi);
+              let grp_keep: Vec<u8> = ends.into_iter().map(|x| x.cel ).collect();
+              let grp_elim = self.connected_all(&grp_keep);
               let grp_elim = keep(&grp_elim, |c| {
                 let cel = self.cell(c).clone();
                 cel.can_be(elim_val) & !chain_hs.contains(&c)
               });
               if !grp_elim.is_empty() {
                 // Found simple colouring eliminations!
-                print!("\nSimple Colouring by Chain Ends{}: Eliminating {:?} from {}.", 
-                  self.cells_str(&endsi), elim_val, self.cells_str(&grp_elim));
-                for fcn in &grp_elim {
-                  let fcel = self.cell_mut(*fcn);
-                  fcel.elim_val(elim_val);
-                }
-                return true;
+                out.new_task()
+                  .set_rule(SinglesChainCE)
+                  .op_elim()
+                  .keep_cells_all(&grp_keep)
+                  .elim_cells_all(&grp_elim)
+                  .set_elim_val(elim_val);
+                break;
               }
             }
           }
@@ -703,20 +701,20 @@ impl SuPuzzle {
         colour_test = chain.next_colour_set();
       }
     }
-    false
+    out
   }
   
-  pub fn ywings(&mut self) -> bool { // (&self) -> CellTasks {
-    //let mut out = CellTasks::new();
-    let test = self.unsolvedCells();
-    for tcn in test.clone() {
-      let tcel = self.cell(tcn).clone();
-      if tcel.pmarks_set().len() != 2 { continue; }
-      for cels in Permuter::new(2, test.clone()) {
-        if (tcn == cels[0]) | (tcn == cels[1]) { continue; }
-        let acel = self.cell(cels[0]).clone();
-        let bcel = self.cell(cels[1]).clone();
-        if !(tcel.can_see(&acel) & tcel.can_see(&bcel)) { continue; }
+  pub fn ywings(&self) -> CellTasks {
+    let mut out = CellTasks::new();
+    let test = self.unsolved_cells();
+    for hinge in test.clone() {
+      let hinge_cell = self.cell(hinge).clone();
+      if hinge_cell.pmarks_set().len() != 2 { continue; }
+      for grp_keep in Permuter::new(2, test.clone()) {
+        if (hinge == grp_keep[0]) | (hinge == grp_keep[1]) { continue; }
+        let acel = self.cell(grp_keep[0]).clone();
+        let bcel = self.cell(grp_keep[1]).clone();
+        if !(hinge_cell.can_see(&acel) & hinge_cell.can_see(&bcel)) { continue; }
         if acel.can_see(&bcel) { continue; }
         let pma = acel.pmarks_set();
         if pma.len() != 2 { continue; }
@@ -725,28 +723,29 @@ impl SuPuzzle {
         let pmiab = acel.pmarks_set().intersection(&bcel.pmarks_set())
                       .cloned().into_iter().collect::<Vec<u8>>();
         if pmiab.len() != 1 { continue; }
-        let c = pmiab[0];
-        if tcel.pmarks_set().contains(&c) { continue; }
-        if tcel.pmarks_set().intersection(&acel.pmarks_set())
+        let elim_val = pmiab[0];
+        if hinge_cell.pmarks_set().contains(&elim_val) { continue; }
+        if hinge_cell.pmarks_set().intersection(&acel.pmarks_set())
                 .cloned().into_iter().collect::<Vec<u8>>()
                 .len() != 1 { continue; }
-        if tcel.pmarks_set().intersection(&bcel.pmarks_set())
+        if hinge_cell.pmarks_set().intersection(&bcel.pmarks_set())
                 .cloned().into_iter().collect::<Vec<u8>>()
                 .len() != 1 { continue; }
         let grp_elim = keep(&test, |ec| 
-          self.canSeeAll(ec, &cels) & self.cell(ec).pmarks_set().contains(&c));
+          self.can_see_all(ec, &grp_keep) & self.cell(ec).pmarks_set().contains(&elim_val));
         if !grp_elim.is_empty() {
           // Found Y-Wing elimination!
-          print!("\nY-Wing<{}{}>: Eliminating {} from {}", 
-                    tcel.loc_str(), self.cells_str(&cels), c, self.cells_str(&grp_elim));
-          for fcn in &grp_elim {
-            let fcel = self.cell_mut(*fcn);
-            fcel.elim_val(c);
-          }
-          return true;
+          out.new_task()
+            .set_rule(YWing)
+            .op_elim()
+            .set_keep_cell(hinge)
+            .keep_cells_all(&grp_keep)
+            .elim_cells_all(&grp_elim)
+            .set_elim_val(elim_val);
+          //return true;
         }
       }
     }
-    false
+    out
   }
 }
