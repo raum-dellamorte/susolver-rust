@@ -130,7 +130,7 @@ impl<'a> Chain<'a> {
       let tc1 = self.puz.cell(cn1);
       let tc2 = self.puz.cell(cn2);
       if cl1.colour == cl2.colour {
-        if tc1.canSee(tc2) {
+        if tc1.can_see(tc2) {
           return Some(self.chain_scsg_elim(cl1.colour))
         }
       }

@@ -3,25 +3,35 @@ use std::collections::HashSet;
 use susolver::util::{loc_str, locs_str, pair_or_trip};
 
 pub enum SuElim {
-  ELIM,
-  NOOP,
+  Elim,
+  NoOp,
 }
 
 pub enum SuRule {
-  SIMPLEELIM,
-  HIDDENSINGLE,
-  NAKEDGRP,
-  HIDDENGRP,
-  POINTINGPAIR,
-  BOXLINEREDUX,
-  XWING,
-  SINGLESCHAIN,
-  YWING,
-  NORULE,
+  SimpleElim,
+  HiddenSingle,
+  NakedGrp,
+  HiddenGrp,
+  PointingPair,
+  BoxLineRedux,
+  XWing,
+  SinglesChainCC,
+  SinglesChainCE,
+  YWing,
+  NoRule,
+}
+
+pub enum SuRuleSet {
+  OneFromOne,
+  OneFromMany,
+  ManyFromOne,
+  ManyFromMany,
+  NoSet,
 }
 
 use susolver::celltasks::SuElim::*;
 use susolver::celltasks::SuRule::*;
+use susolver::celltasks::SuRuleSet::*;
 
 pub struct CellTask {
   pub keep_cell: Option<u8>,
@@ -47,34 +57,98 @@ impl CellTask {
       keep_vals: HashSet::new(),
       elim_val: None,
       elim_vals: HashSet::new(),
-      op: NOOP,
-      rule: NORULE,
+      op: NoOp,
+      rule: NoRule,
+    }
+  }
+  pub fn rule_set(&self) -> SuRuleSet {
+    match self.rule {
+      SimpleElim | HiddenSingle => { ManyFromOne }
+      NakedGrp | HiddenGrp | BoxLineRedux => { ManyFromMany }
+      PointingPair | XWing | SinglesChainCC | SinglesChainCE | YWing => { OneFromMany }
+      _ => { NoSet }
+    }
+  }
+  pub fn msg(&self) -> String {
+    match self.rule {
+      SimpleElim   => {
+        format!("<{}>: drop {:?}", 
+          self.elim_cell_str(), &self.elim_vals_vec()
+        )
+      }
+      HiddenSingle => {
+        format!("hiddenSingle<{}={}>: drop {:?}", 
+          self.elim_cell_str(), self.keep_val_str(), &self.elim_vals_vec()
+        )
+      }
+      NakedGrp     => {
+        format!("Naked {}{}: Eliminating {:?} from {}", 
+          pair_or_trip(self.keep_cells.len()), self.keep_cells_str(), 
+          self.elim_vals, self.elim_cells_str()
+        )
+      }
+      HiddenGrp    => {
+        format!("Hidden {}{}{:?}: Eliminating other values.", 
+          pair_or_trip(self.elim_cells.len()), self.elim_cells_str(), self.keep_vals_vec()
+        )
+      }
+      PointingPair => {
+        format!("Pointing Pair{}: Eliminating {} from {}.",
+          self.keep_cells_str(), self.elim_val_str(), self.elim_cells_str()
+        )
+      }
+      BoxLineRedux => {
+        format!("Box Line Reduction{}: Eliminating {:?} from {}.",
+          self.keep_cells_str(), self.elim_vals, self.elim_cells_str()
+        )
+      }
+      XWing        => {
+        format!("X-Wing{}: Eliminating {} from {}",
+          self.keep_cells_str(), self.elim_val_str(), self.elim_cells_str()
+        )
+      }
+      SinglesChainCC => {
+        format!("Simple Colouring by Colour Conflict: Eliminating {} from {}.",
+          self.elim_val_str(), self.elim_cells_str()
+        )
+      }
+      SinglesChainCE => {
+        format!("Simple Colouring by Chain Ends{}: Eliminating {} from {}.",
+          self.keep_cells_str(), self.elim_val_str(), self.elim_cells_str()
+        )
+      }
+      YWing        => {
+        format!("Y-Wing<{}{}>: Eliminating {} from {}",
+          self.keep_cell_str(), self.keep_cells_str(), self.elim_val_str(), self.elim_cells_str()
+        )
+      }
+      NoRule => String::new()
     }
   }
   pub fn op_elim(&mut self) -> &mut Self {
     match self.op {
-      ELIM => {}
-      NOOP => { self.op = ELIM; }
+      Elim => {}
+      NoOp => { self.op = Elim; }
     }
     self
   }
   pub fn is_elim(&self) -> bool {
     match self.op {
-      ELIM => { true }
-      NOOP => { false }
+      Elim => { true }
+      NoOp => { false }
     }
   }
   pub fn op_noop(&mut self) -> &mut Self {
     match self.op {
-      ELIM => { self.op = NOOP; }
-      NOOP => {}
+      Elim => { self.op = NoOp; }
+      NoOp => {}
     }
     self
   }
   pub fn is_noop(&self) -> bool {
     match self.op {
-      ELIM => { false }
-      NOOP => { true }
+      Elim => { false }
+      NoOp => { true }
     }
   }
   pub fn set_keep_cell(&mut self, cel: u8) -> &mut Self {
@@ -144,31 +218,6 @@ impl CellTask {
   pub fn set_rule(&mut self, rule: SuRule) -> &mut Self {
     self.rule = rule;
     self
-  }
-  pub fn msg(&self) -> String {
-    match self.rule {
-      SIMPLEELIM   => { format!("<{}>: drop {:?}", 
-                          self.elim_cell_str(), &self.elim_vals_vec())}
-      HIDDENSINGLE => { format!("hiddenSingle<{}={}>: drop {:?}", 
-                          self.elim_cell_str(), self.keep_val_str(), &self.elim_vals_vec()) }
-      NAKEDGRP     => {
-        format!("Naked {}{}: Eliminating {:?} from {}", 
-          pair_or_trip(self.keep_cells.len()), self.keep_cells_str(), 
-          self.elim_vals, self.elim_cells_str())
-      }
-      HIDDENGRP    => {
-        format!("Hidden {}{}{:?}: Eliminating other values.", 
-          pair_or_trip(self.elim_cells.len()), self.elim_cells_str(), self.keep_vals_vec())
-      }
-      POINTINGPAIR => { format!("Pointing Pair{}: Eliminating {} from {}.",
-                          self.keep_cells_str(), self.elim_val_str(), self.elim_cells_str() ) }
-      BOXLINEREDUX => { format!("Box Line Reduction{}: Eliminating {:?} from {}.",
-                          self.keep_cells_str(), self.elim_vals, self.elim_cells_str() ) }
-      XWING        => { format!("") }
-      SINGLESCHAIN => { format!("") }
-      YWING        => { format!("") }
-      NORULE => String::new()
-    }
   }
   pub fn keep_cells_vec(&self) -> Vec<u8> {
     let mut out = vec![];
@@ -240,7 +289,7 @@ impl CellTasks {
   pub fn pop_noop(&mut self) {
     if self.has_tasks() {
       match self.tasks[self.tasks.len() - 1].op {
-        NOOP => { self.tasks.pop(); }
+        NoOp => { self.tasks.pop(); }
         _ => {}
       }
     }

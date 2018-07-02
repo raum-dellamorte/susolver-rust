@@ -20,7 +20,7 @@ impl SuCell {
     mod9(self.pos)
   }
   
-  pub fn colS(&self) -> char {
+  pub fn col_str(&self) -> char {
     (48_u8 + self.col()) as char
   }
   
@@ -28,7 +28,7 @@ impl SuCell {
     grp9(self.pos)
   }
   
-  pub fn rowS(&self) -> char {
+  pub fn row_str(&self) -> char {
     (64_u8 + self.row()) as char
   }
   
@@ -55,7 +55,7 @@ impl SuCell {
     (self.block(), self.row(), self.col())
   }
   
-  pub fn sameGroup(&self, tcel: &SuCell, grp: &BRC) -> bool {
+  pub fn same_group(&self, tcel: &SuCell, grp: &BRC) -> bool {
     match grp {
       &BLK => { self.block() == tcel.block() }
       &ROW => { self.row() == tcel.row() }
@@ -63,18 +63,18 @@ impl SuCell {
     }
   }
   
-  pub fn locS(&self) -> String {
-    format!("{}{}", self.rowS(), self.colS())
+  pub fn loc_str(&self) -> String {
+    format!("{}{}", self.row_str(), self.col_str())
   }
   
-  pub fn pmarksSet(&self) -> HashSet<u8> {
+  pub fn pmarks_set(&self) -> HashSet<u8> {
     let mut out: HashSet<u8> = HashSet::new();
     for i in 0..9 {
       if self.pmarks[i] { out.insert((i + 1) as u8); }
     }
     out
   }
-  pub fn pmarksVec(&self) -> Vec<u8> {
+  pub fn pmarks_vec(&self) -> Vec<u8> {
     let mut out: Vec<u8> = vec![];
     for i in 0..9 {
       if self.pmarks[i] { out.push((i + 1) as u8); }
@@ -82,19 +82,19 @@ impl SuCell {
     out
   }
   
-  pub fn checkSolve(&mut self) -> String {
+  pub fn check_solve(&mut self) -> String {
     if self.pmsolved() {
-      self.val = self.pmarksVec()[0];
-      return format!("Cell {} solved as {}", self.locS(), self.val)
+      self.val = self.pmarks_vec()[0];
+      return format!("Cell {} solved as {}", self.loc_str(), self.val)
     }
-    format!("Cell {} not yet solved", self.locS())
+    format!("Cell {} not yet solved", self.loc_str())
   }
   
-  pub fn elimVal(&mut self, n: u8) {
+  pub fn elim_val(&mut self, n: u8) {
     self.pmarks[c(n)] = false;
   }
   
-  pub fn elimVals(&mut self, ns: &[u8]) {
+  pub fn elim_vals(&mut self, ns: &[u8]) {
     for n in ns {
       self.pmarks[c(*n)] = false;
     }
@@ -107,19 +107,19 @@ impl SuCell {
     if self.solved() { return false }
     //let sum = self.pmarks.iter().fold(0,|a, &b| if b {a + 1} else {a});
     //return sum == 1
-    return self.pmarksVec().len() == 1
+    return self.pmarks_vec().len() == 1
   }
-  pub fn canBe(&self, n: u8) -> bool {
+  pub fn can_be(&self, n: u8) -> bool {
     self.pmarks[c(n)]
   }
-  pub fn canBeAny(&self, ns: &[u8]) -> bool {
+  pub fn can_be_any(&self, ns: &[u8]) -> bool {
     let mut out = false;
     for n in ns {
       out = out || self.pmarks[c(*n)];
     }
     out
   }
-  pub fn canSee(&self, cel: &SuCell) -> bool {
+  pub fn can_see(&self, cel: &SuCell) -> bool {
     (self.pos != cel.pos) && ((self.col() == cel.col()) || (self.row() == cel.row()) || (self.block() == cel.block()))
   }
 }
