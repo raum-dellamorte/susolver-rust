@@ -305,8 +305,8 @@ impl SuPuzzle {
       self.check_cells();
       if self.solved_cells().len() == 81 { break; }
       print!("\nRunning simpleElim");
-      if self.proc_tasks(self.simple_elim() as CellTasks) { continue; } else { print!(" | "); }
-      print!("Running hiddenSingle");
+      if self.proc_tasks(self.simple_elim() as CellTasks) { continue; }
+      print!(" | Running hiddenSingle");
       if self.proc_tasks(self.hidden_single()) { continue; }
       print!(" | Running nakedPairsTrips");
       if self.proc_tasks(self.naked_pairs_trips()) { continue; }
@@ -361,7 +361,6 @@ impl SuPuzzle {
         NoOp => {}
       }
     }
-    print!("\n");
     true
   }
   pub fn simple_elim(&self) -> CellTasks {
